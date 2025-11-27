@@ -1,0 +1,89 @@
+html
+  head
+    title Details Document
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 800px;
+      }
+      .header {
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .divider {
+        height: 2px;
+        background-color: #ddd;
+        margin: 20px 0;
+        border: none;
+      }
+      .details-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .details-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid #eee;
+        font-size: 16px;
+      }
+      .details-list li:last-child {
+        border-bottom: none;
+      }
+      .detail-label {
+        font-weight: bold;
+        color: #555;
+        display: inline-block;
+        width: 180px;
+      }
+      .detail-value {
+        color: #333;
+      }
+      .btn-back {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #6c757d;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+      }
+      .btn-back:hover {
+        background-color: #5a6268;
+      }
+  body
+    .header
+      h1 Details Document
+    hr.divider
+    if document
+      ul.details-list
+        li
+          span.detail-label Name:
+          span.detail-value= document.name
+        li
+          span.detail-label Size:
+          span.detail-value= `${document.size} bytes`
+        li
+          span.detail-label S3 URL:
+          span.detail-value= document.s3_url
+        li
+          span.detail-label User:
+          span.detail-value= document.user ? `${document.user.first_name} ${document.user.last_name} (${document.user.email})` : 'N/A'
+        li
+          span.detail-label Created At:
+          span.detail-value= new Date(document.created_at).toLocaleString()
+    else
+      p(style="color: red; font-size: 18px;")= error || "Document not found"
+    a.btn-back(href="/documents") Back to Documents List
+
+
+
+
+
+
+
+
+

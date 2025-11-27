@@ -1,0 +1,98 @@
+html
+  head
+    title= title
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .btn-create {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-create:hover {
+        background-color: #45a049;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th, td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #4CAF50;
+        color: white;
+      }
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+      .btn-action {
+        padding: 8px 16px;
+        border-radius: 4px;
+        text-decoration: none;
+        color: white;
+        font-size: 14px;
+        margin-right: 8px;
+        display: inline-block;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+      .btn-edit {
+        background-color: #2196F3;
+      }
+      .btn-edit:hover {
+        background-color: #1976D2;
+      }
+      .btn-details {
+        background-color: #9C27B0;
+      }
+      .btn-details:hover {
+        background-color: #7B1FA2;
+      }
+      td .btn-action:last-child {
+        margin-right: 0;
+      }
+  body
+    .header
+      h1= title
+      a.btn-create(href="/users/create") Create New
+    table
+      thead
+        tr
+          th First Name
+          th Last Name
+          th Email
+          th Number of Attempts
+          th Actions
+      tbody
+        if users && users.length > 0
+          each user in users
+            tr
+              td= user.first_name
+              td= user.last_name
+              td= user.email
+              td= user.number_of_attempts
+              td
+                a.btn-action.btn-edit(href=`/users/edit/${user.id}`) Edit
+                a.btn-action.btn-details(href=`/users/${user.id}`) Details
+        else
+          tr
+            td(colspan="5" style="text-align: center;") No users found

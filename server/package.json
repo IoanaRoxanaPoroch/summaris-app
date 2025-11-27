@@ -1,0 +1,20 @@
+{
+  "name": "summaris-be",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "-": "^0.0.1",
+    "@prisma/client": "^6.19.0",
+    "express": "^5.1.0",
+    "prisma": "^6.19.0",
+    "pug": "^3.0.3",
+    "save-dev": "^0.0.1-security"
+  }
+}

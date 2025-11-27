@@ -1,0 +1,119 @@
+html
+  head
+    title Edit Document
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 600px;
+      }
+      .header {
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .form-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="text"],
+      input[type="number"],
+      input[type="url"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="number"]:focus,
+      input[type="url"]:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+      }
+      .btn-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      .btn-update {
+        background-color: #2196F3;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .btn-update:hover {
+        background-color: #1976D2;
+      }
+      .btn-cancel {
+        background-color: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-cancel:hover {
+        background-color: #5a6268;
+      }
+      .error-message {
+        color: red;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #ffe6e6;
+        border: 1px solid #ff9999;
+        border-radius: 4px;
+      }
+  body
+    .header
+      h1 Edit Document
+    .form-container
+      if error
+        .error-message= error
+      form(action=`/documents/edit/${document.id}` method="POST")
+        .form-group
+          label(for="name") Name:
+          input#name(type="text" name="name" required value=document.name)
+        .form-group
+          label(for="size") Size (bytes):
+          input#size(type="number" name="size" required min="0" value=document.size)
+        .form-group
+          label(for="s3_url") S3 URL:
+          input#s3_url(type="url" name="s3_url" required value=document.s3_url)
+        .form-group
+          label(for="user_id") User ID:
+          input#user_id(type="text" name="user_id" required value=document.user_id)
+        .btn-container
+          button.btn-update(type="submit") Update
+          a.btn-cancel(href=`/documents/${document.id}`) Cancel
+
+
+
+
+
+
+
+
+

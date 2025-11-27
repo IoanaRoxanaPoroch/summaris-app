@@ -1,0 +1,111 @@
+html
+  head
+    title Edit User
+    style.
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        max-width: 600px;
+      }
+      .header {
+        margin-bottom: 20px;
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .form-container {
+        background-color: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 16px;
+        box-sizing: border-box;
+      }
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        border-color: #2196F3;
+        box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+      }
+      .btn-container {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      .btn-update {
+        background-color: #2196F3;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .btn-update:hover {
+        background-color: #1976D2;
+      }
+      .btn-cancel {
+        background-color: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-cancel:hover {
+        background-color: #5a6268;
+      }
+      .error-message {
+        color: red;
+        margin-top: 10px;
+        padding: 10px;
+        background-color: #ffe6e6;
+        border: 1px solid #ff9999;
+        border-radius: 4px;
+      }
+  body
+    .header
+      h1 Edit User
+    .form-container
+      if error
+        .error-message= error
+      form(action=`/users/edit/${user.id}` method="POST")
+        .form-group
+          label(for="first_name") First Name:
+          input#first_name(type="text" name="first_name" required value=user.first_name)
+        .form-group
+          label(for="last_name") Last Name:
+          input#last_name(type="text" name="last_name" required value=user.last_name)
+        .form-group
+          label(for="email") Email:
+          input#email(type="email" name="email" required value=user.email)
+        .form-group
+          label(for="password") Password:
+          input#password(type="password" name="password" placeholder="Leave blank to keep current password")
+        .btn-container
+          button.btn-update(type="submit") Update
+          a.btn-cancel(href=`/users/${user.id}`) Cancel
+

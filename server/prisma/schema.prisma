@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(cuid())
+  first_name String
+  last_name String
+  email String @unique
+  password String
+  number_of_attempts Int
+  created_at DateTime @default(now())
+
+  documents Document[]
+  subscription Subscription?
+}
+
+model Document {
+  id String @id @default(cuid())
+  name String
+  size Int
+  created_at DateTime @default(now())
+  s3_url String
+  user_id String
+  user User @relation(fields: [user_id], references: [id])
+  summary Summary?
+}
+
+model Summary {
+  id String @id @default(cuid())
+  content String @db.Text
+  size Int
+  created_at DateTime @default(now())
+  doc_id String @unique
+
+  document Document @relation( fields:[doc_id], references: [id])
+}
+
+model Subscription {
+  id String @id @default(cuid())
+  name String
+  price Int
+  stripe_subscription_id String
+  status String
+  user_id String @unique
+
+  user User @relation(fields: [user_id], references: [id])
+}
