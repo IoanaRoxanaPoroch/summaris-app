@@ -16,7 +16,6 @@ import COLORS from "../../theme/colors";
 
 export function Sidebar() {
   const { isSignedIn } = useUser();
-  const isUserAuth = false;
   const menuItems = [
     { id: "home", label: "Acasă", icon: <Home />, path: "/" },
     // {
@@ -33,8 +32,6 @@ export function Sidebar() {
     // },
     // { id: "settings", label: "Setări", icon: <Settings />, path: "/settings" },
   ];
-
-  console.log("in side bar", isSignedIn);
 
   return (
     <Paper
