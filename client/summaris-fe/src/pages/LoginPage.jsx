@@ -1,10 +1,28 @@
-import { SignIn, SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
-
+import {
+  SignIn,
+  SignedIn,
+  SignedOut,
+  UserButton,
+  useAuth,
+} from "@clerk/clerk-react";
 import { Summarize } from "@mui/icons-material";
 import { Box, Card, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
 import COLORS from "../theme/colors";
 
 export const LoginPage = () => {
+  const navigate = useNavigate();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  // Redirecționează automat către /home dacă utilizatorul este deja autentificat
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      navigate("/home", { replace: true });
+    }
+  }, [isSignedIn, isLoaded, navigate]);
+
   return (
     <Box
       sx={{
@@ -22,6 +40,7 @@ export const LoginPage = () => {
           gap: "40px",
           flexDirection: "column",
           alignItems: "center",
+          minWidth: "400px",
         }}
       >
         <Box
@@ -44,11 +63,27 @@ export const LoginPage = () => {
         </Typography>
 
         <SignedOut>
-          <SignIn redirectUrl="/" />
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "20px",
+              width: "100%",
+              alignItems: "center",
+            }}
+          >
+            <SignIn
+              redirectUrl="/home"
+              signUpUrl="/sign-up"
+              appearance={{
+                baseTheme: "light",
+              }}
+            />
+          </Box>
         </SignedOut>
 
         <SignedIn>
-          <UserButton afterSignOutUrl="/sign-in" />
+          <UserButton afterSignOutUrl="/login" />
         </SignedIn>
       </Card>
     </Box>

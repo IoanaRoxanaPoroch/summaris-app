@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Configure base URL for API
-const API_BASE_URL = "http://localhost:8080";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -43,6 +43,20 @@ export const userAPI = {
       const response = await api.get("/users/api");
       return response.data;
     } catch (error) {
+      throw error.response?.data || error.message;
+    }
+  },
+
+  // Get user by email
+  async getUserByEmail(email) {
+    try {
+      const response = await api.get(`/users/api/email?email=${encodeURIComponent(email)}`);
+      return response.data;
+    } catch (error) {
+      // Dacă utilizatorul nu există, returnează null în loc să arunce eroare
+      if (error.response?.status === 404) {
+        return null;
+      }
       throw error.response?.data || error.message;
     }
   },

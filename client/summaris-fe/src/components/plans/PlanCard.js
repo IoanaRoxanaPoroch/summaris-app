@@ -12,7 +12,8 @@ import {
   ListItemText,
   Typography,
 } from "@mui/material";
-import COLORS from "../../constants/colors"; // ajustează path-ul după structura ta
+
+import COLORS from "../../theme/colors";
 
 const PlanCard = ({ plan, isCurrent, onSelect }) => {
   const { id, name, price, period, features, popular } = plan;
@@ -108,13 +109,7 @@ const PlanCard = ({ plan, isCurrent, onSelect }) => {
               <ListItemIcon sx={{ minWidth: 28 }}>
                 <Check sx={{ color, fontSize: 18 }} />
               </ListItemIcon>
-              <ListItemText
-                primary={feature}
-                primaryTypographyProps={{
-                  variant: "body2",
-                  sx: { color: COLORS.BLACK },
-                }}
-              />
+              <ListItemText primary={feature} />
             </ListItem>
           ))}
         </List>

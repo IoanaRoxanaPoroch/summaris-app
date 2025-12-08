@@ -38,10 +38,25 @@ const userController = {
     try {
       const { first_name, last_name, email, password } = req.body;
 
-      if (!first_name || !last_name || !email || !password) {
+      if (!first_name || !last_name || !email) {
         return res.status(400).json({
           error: "All fields are required",
-          message: "First name, last name, email, and password are required",
+          message: "First name, last name, and email are required",
+        });
+      }
+
+      // Verifică dacă utilizatorul există deja
+      const existingUser = await usersRepository.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(200).json({
+          message: "User already exists",
+          user: {
+            id: existingUser.id,
+            first_name: existingUser.first_name,
+            last_name: existingUser.last_name,
+            email: existingUser.email,
+            created_at: existingUser.created_at,
+          },
         });
       }
 
@@ -49,11 +64,13 @@ const userController = {
         first_name,
         last_name,
         email,
-        password,
+        password: password || "", // Parolă opțională (Clerk gestionează autentificarea)
         number_of_attempts: 0,
       };
 
+      console.log("Creating user in database via repository:", { email, first_name, last_name });
       const createdUser = await usersRepository.createUser(userData);
+      console.log("User created successfully in database:", createdUser.id);
       res.status(201).json({
         message: "User created successfully",
         user: {
@@ -75,6 +92,40 @@ const userController = {
       res.status(400).json({
         error: err.message,
         message: "Failed to create user",
+      });
+    }
+  },
+
+  async getUserByEmail(req, res) {
+    try {
+      const { email } = req.query;
+      if (!email) {
+        return res.status(400).json({
+          error: "Email is required",
+          message: "Please provide an email address",
+        });
+      }
+
+      const user = await usersRepository.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      res.json({
+        user: {
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          created_at: user.created_at,
+        },
+      });
+    } catch (err) {
+      res.status(500).json({
+        error: err.message,
+        message: "Failed to get user",
       });
     }
   },

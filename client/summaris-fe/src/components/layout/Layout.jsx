@@ -1,4 +1,5 @@
 import { Box } from "@mui/material";
+
 import COLORS from "../../theme/colors";
 import { Navbar } from "../common/Navbar";
 import { Sidebar } from "../common/Sidebar";
@@ -32,10 +33,7 @@ function Layout({ children }) {
       >
         <Navbar />
 
-        <Box sx={{ flex: 1, overflow: "auto" }}>
-          {/* <Outlet /> */}
-          {children}
-        </Box>
+        <Box sx={{ flex: 1, overflow: "auto" }}>{children}</Box>
       </Box>
     </Box>
   );
