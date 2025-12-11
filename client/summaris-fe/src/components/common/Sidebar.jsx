@@ -1,6 +1,6 @@
 import { SignOutButton, useUser } from "@clerk/clerk-react";
 
-import { Home, Logout, Summarize } from "@mui/icons-material";
+import { Folder, Home, Logout, Summarize } from "@mui/icons-material";
 import {
   Box,
   Button,
@@ -17,19 +17,19 @@ import COLORS from "../../theme/colors";
 export function Sidebar() {
   const { isSignedIn } = useUser();
   const menuItems = [
-    { id: "home", label: "Acasă", icon: <Home />, path: "/" },
+    { id: "home", label: "Acasă", icon: <Home />, path: "/home" },
     // {
     //   id: "dashboard",
     //   label: "Dashboard",
     //   icon: <Dashboard />,
     //   path: "/dashboard",
     // },
-    // {
-    //   id: "documents",
-    //   label: "Documente",
-    //   icon: <Folder />,
-    //   path: "/documents",
-    // },
+    {
+      id: "documents",
+      label: "Documente",
+      icon: <Folder />,
+      path: "/my-docs",
+    },
     // { id: "settings", label: "Setări", icon: <Settings />, path: "/settings" },
   ];
 

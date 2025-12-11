@@ -29,4 +29,15 @@ export const usersRepository = {
   async deleteUser(id) {
     return prisma.user.delete({ where: { id } });
   },
+
+  async incrementAttempts(id) {
+    return prisma.user.update({
+      where: { id },
+      data: {
+        number_of_attempts: {
+          increment: 1,
+        },
+      },
+    });
+  },
 };

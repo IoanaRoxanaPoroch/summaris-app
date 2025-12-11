@@ -4,7 +4,7 @@ import COLORS from "../../theme/colors";
 export function Navbar({
   title = "Pagina curentă",
   documentCount = 0,
-  plan = "Free",
+  plan = "Gratuit",
 }) {
   return (
     <Paper

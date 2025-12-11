@@ -1,11 +1,37 @@
+import { useUser } from "@clerk/clerk-react";
 import { Box } from "@mui/material";
+import { useCallback, useEffect, useState } from "react";
 
+import { get } from "../../services/apiClient";
 import COLORS from "../../theme/colors";
 import { Navbar } from "../common/Navbar";
 import { Sidebar } from "../common/Sidebar";
 
 function Layout({ children }) {
-  console.log("in layout");
+  const { user } = useUser();
+  const [plan, setPlan] = useState("Gratuit");
+
+  const fetchPlan = useCallback(async () => {
+    const email = user?.emailAddresses?.[0]?.emailAddress;
+    if (!email) return;
+    try {
+      const res = await get("/subscriptions/api", { email });
+      setPlan(res.subscription?.name || "Gratuit");
+    } catch (err) {
+      console.error("Failed to fetch plan:", err);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchPlan();
+  }, [fetchPlan]);
+
+  useEffect(() => {
+    const handler = () => fetchPlan();
+    window.addEventListener("plan-updated", handler);
+    return () => window.removeEventListener("plan-updated", handler);
+  }, [fetchPlan]);
+
   return (
     <Box
       sx={{
@@ -31,7 +57,7 @@ function Layout({ children }) {
           overflow: "hidden",
         }}
       >
-        <Navbar />
+        <Navbar plan={plan} />
 
         <Box sx={{ flex: 1, overflow: "auto" }}>{children}</Box>
       </Box>
