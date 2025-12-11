@@ -2,9 +2,10 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import documentRoutes from "./routes/documentRoute.js";
-import userRoutes from "./routes/userRoute.js";
 import clerkWebhookRoutes from "./routes/clerkWebhookRoute.js";
+import documentRoutes from "./routes/documentRoute.js";
+import subscriptionRoutes from "./routes/subscriptionRoute.js";
+import userRoutes from "./routes/userRoute.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,6 +60,7 @@ app.get("/", (req, res) => {
 app.use("/users", userRoutes);
 app.use("/documents", documentRoutes);
 app.use("/webhooks/clerk", clerkWebhookRoutes);
+app.use("/subscriptions", subscriptionRoutes);
 
 app.listen(8080, () => {
   console.log("server listening on port 8080");

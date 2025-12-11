@@ -48,4 +48,27 @@ export const documentsRepository = {
   async deleteDocument(id) {
     return prisma.document.delete({ where: { id } });
   },
+
+  async getDocumentsByUserId(userId) {
+    return prisma.document.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
+    });
+  },
+
+  async countDocumentsByUserId(userId) {
+    return prisma.document.count({
+      where: { user_id: userId },
+    });
+  },
+
+  async getSummariesByUserId(userId) {
+    return prisma.document.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
+      include: {
+        summary: true,
+      },
+    });
+  },
 };

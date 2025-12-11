@@ -45,17 +45,18 @@ const userController = {
         });
       }
 
-      // Verifică dacă utilizatorul există deja
-      const existingUser = await usersRepository.getUserByEmail(email);
-      if (existingUser) {
+      // Verifică dacă utilizatorul există deja după email
+      const existingUserByEmail = await usersRepository.getUserByEmail(email);
+
+      if (existingUserByEmail) {
         return res.status(200).json({
           message: "User already exists",
           user: {
-            id: existingUser.id,
-            first_name: existingUser.first_name,
-            last_name: existingUser.last_name,
-            email: existingUser.email,
-            created_at: existingUser.created_at,
+            id: existingUserByEmail.id,
+            first_name: existingUserByEmail.first_name,
+            last_name: existingUserByEmail.last_name,
+            email: existingUserByEmail.email,
+            created_at: existingUserByEmail.created_at,
           },
         });
       }
@@ -68,9 +69,13 @@ const userController = {
         number_of_attempts: 0,
       };
 
-      console.log("Creating user in database via repository:", { email, first_name, last_name });
+      console.log("UserData object:", JSON.stringify(userData, null, 2));
       const createdUser = await usersRepository.createUser(userData);
-      console.log("User created successfully in database:", createdUser.id);
+      console.log(
+        "User created successfully in database. Created ID:",
+        createdUser.id
+      );
+      console.log("Clerk ID:", createdUser.clerk_id);
       res.status(201).json({
         message: "User created successfully",
         user: {
