@@ -1,7 +1,7 @@
-import { documentsRepository } from "../repositories/documentRepository.js";
+import * as documentService from "../services/documentService.js";
 
 const documentControllerMVC = {
-  async createView(req, res) {
+  async createView(_, res) {
     res.render("documentCreate", { error: null });
   },
 
@@ -23,7 +23,7 @@ const documentControllerMVC = {
         user_id,
       };
 
-      const createdDocument = await documentsRepository.createDocument(
+      const createdDocument = await documentService.createDocument(
         documentData
       );
       res.redirect(`/documents/${createdDocument.id}`);
@@ -37,7 +37,7 @@ const documentControllerMVC = {
 
   async getAllView(req, res) {
     try {
-      const documents = await documentsRepository.getAllDocuments();
+      const documents = await documentService.getAllDocuments();
       res.render("documentsIndex", {
         title: "Documents",
         documents: documents,
@@ -64,7 +64,7 @@ const documentControllerMVC = {
         });
       }
 
-      const document = await documentsRepository.getDocumentById(req.params.id);
+      const document = await documentService.getDocumentById(req.params.id);
       if (!document) {
         return res.status(404).render("documentDetails", {
           document: null,
@@ -82,7 +82,7 @@ const documentControllerMVC = {
 
   async editView(req, res) {
     try {
-      const document = await documentsRepository.getDocumentById(req.params.id);
+      const document = await documentService.getDocumentById(req.params.id);
       if (!document) {
         return res.status(404).render("documentEdit", {
           document: null,
@@ -117,13 +117,13 @@ const documentControllerMVC = {
         user_id,
       };
 
-      const updatedDocument = await documentsRepository.updateDocument(
+      const updatedDocument = await documentService.updateDocument(
         documentId,
         updateData
       );
       res.redirect(`/documents/${updatedDocument.id}`);
     } catch (err) {
-      const document = await documentsRepository
+      const document = await documentService
         .getDocumentById(req.params.id)
         .catch(() => null);
       res.status(400).render("documentEdit", {

@@ -1,48 +1,92 @@
-import { usersRepository } from "../repositories/userRepository.js";
+import * as userService from "../services/userService.js";
 
 const userController_MVC = {
-  async createView(req, res) {
-    res.render("userCreate", { error: null });
+  async createUserView(_, res) {
+    return res.render("userCreate", { error: null, user: {} });
   },
 
-  async create(req, res) {
+  async createUser(req, res) {
     try {
-      const { first_name, last_name, email, password } = req.body;
+      const { first_name, last_name, email, password } = req.body ?? {};
 
       if (!first_name || !last_name || !email || !password) {
         return res.status(400).render("userCreate", {
           error: "All fields are required",
-          user: req.body,
+          user: req.body ?? {},
         });
       }
 
       const userData = {
-        first_name,
-        last_name,
-        email,
-        password,
+        first_name: first_name.trim(),
+        last_name: last_name.trim(),
+        email: email.trim(),
+        password: password.trim(),
         number_of_attempts: 0,
       };
 
-      const createdUser = await usersRepository.createUser(userData);
-      res.redirect(`/users/${createdUser.id}`);
+      const createdUser = await userService.createUser(userData);
+      return res.redirect(`/users/${createdUser.id}`);
     } catch (err) {
-      res.status(400).render("userCreate", {
+      return res.status(400).render("userCreate", {
         error: err.message,
-        user: req.body,
+        user: req.body ?? {},
       });
     }
   },
 
-  async getAllView(req, res) {
+  async editUserView(req, res) {
     try {
-      const users = await usersRepository.getAllUsers();
-      res.render("usersIndex", {
-        title: "Users",
-        users: users,
-      });
+      const { id } = req.params;
+
+      const user = await userService.getUserById(id);
+      if (!user) {
+        return res
+          .status(404)
+          .render("userEdit", { user: null, error: "User not found" });
+      }
+
+      return res.render("userEdit", { user, error: null });
     } catch (err) {
-      res.status(500).render("usersIndex", {
+      return res
+        .status(500)
+        .render("userEdit", { user: null, error: err.message });
+    }
+  },
+
+  async updateUser(req, res) {
+    const { id } = req.params;
+
+    try {
+      const existing = await userService.getUserById(id);
+      if (!existing) {
+        return res
+          .status(404)
+          .render("userEdit", { user: null, error: "User not found" });
+      }
+
+      const payload = {
+        first_name: (req.body?.first_name ?? "").trim(),
+        last_name: (req.body?.last_name ?? "").trim(),
+        email: req.body?.email?.trim(),
+        password: req.body?.password?.trim(),
+      };
+
+      if (!payload.password) delete payload.password;
+
+      const updated = await userService.updateUser(id, payload);
+      return res.redirect(`/users/${updated.id}`);
+    } catch (err) {
+      const user = { id, ...(req.body ?? {}) };
+      return res.status(400).render("userEdit", { user, error: err.message });
+    }
+  },
+
+  async getAllUsersView(_, res) {
+    try {
+      const users = await userService.getAllUsers();
+      return res.render("usersIndex", { title: "Users", users, error: null });
+    } catch (err) {
+      return res.status(500).render("usersIndex", {
         title: "Users",
         users: [],
         error: err.message,
@@ -50,90 +94,28 @@ const userController_MVC = {
     }
   },
 
-  async getByIdView(req, res) {
+  async getUserByIdView(req, res) {
     try {
-      if (req.params.id === "create" || req.params.id === "api") {
-        return res.status(404).render("userDetails", {
-          user: null,
-          error: "Invalid user ID",
-        });
+      const { id } = req.params;
+
+      if (id === "create" || id === "api") {
+        return res
+          .status(404)
+          .render("userDetails", { user: null, error: "Invalid user ID" });
       }
 
-      const user = await usersRepository.getUserById(req.params.id);
+      const user = await userService.getUserById(id);
       if (!user) {
-        return res.status(404).render("userDetails", {
-          user: null,
-          error: "User not found",
-        });
-      }
-      res.render("userDetails", { user: user });
-    } catch (err) {
-      res.status(404).render("userDetails", {
-        user: null,
-        error: err.message,
-      });
-    }
-  },
-
-  async editView(req, res) {
-    try {
-      const user = await usersRepository.getUserById(req.params.id);
-      if (!user) {
-        return res.status(404).render("userEdit", {
-          user: null,
-          error: "User not found",
-        });
-      }
-      res.render("userEdit", { user: user, error: null });
-    } catch (err) {
-      res.status(404).render("userEdit", {
-        user: null,
-        error: err.message,
-      });
-    }
-  },
-
-  async update(req, res) {
-    try {
-      const { first_name, last_name, email, password } = req.body;
-      const userId = req.params.id;
-
-      if (!first_name || !last_name || !email) {
-        return res.status(400).render("userEdit", {
-          error: "First name, last name, and email are required",
-          user: { ...req.body, id: userId },
-        });
+        return res
+          .status(404)
+          .render("userDetails", { user: null, error: "User not found" });
       }
 
-      const updateData = {
-        first_name,
-        last_name,
-        email,
-      };
-
-      if (password && password.trim() !== "") {
-        updateData.password = password;
-      }
-
-      const updatedUser = await usersRepository.updateUser(userId, updateData);
-      res.redirect(`/users/${updatedUser.id}`);
+      return res.render("userDetails", { user, error: null });
     } catch (err) {
-      const user = await usersRepository
-        .getUserById(req.params.id)
-        .catch(() => null);
-      res.status(400).render("userEdit", {
-        error: err.message,
-        user: user || { ...req.body, id: req.params.id },
-      });
-    }
-  },
-
-  async deleteUser(req, res) {
-    try {
-      const deletedUser = await usersRepository.deleteUser(req.params.id);
-      res.json(deletedUser);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+      return res
+        .status(500)
+        .render("userDetails", { user: null, error: err.message });
     }
   },
 };

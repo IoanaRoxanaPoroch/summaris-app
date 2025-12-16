@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const documentsRepository = {
+export const documentRepository = {
   async createDocument(data) {
     return prisma.document.create({ data });
   },

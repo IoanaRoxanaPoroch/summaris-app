@@ -2,22 +2,38 @@ import express from "express";
 import userController from "../controllers/userController.js";
 import userController_MVC from "../controllers/userController_MVC.js";
 
-const router = express.Router({ strict: false });
-const { getAllView, createView, editView, getByIdView } = userController_MVC;
-const { getAll, getById, create, createAPI, getUserByEmail, update, deleteUser } = userController;
+const router = express.Router();
 
-router.get("/", getAllView);
-router.get("/create", createView);
-router.get("/edit/:id", editView);
-router.get("/:id", getByIdView);
+const {
+  getAllUsersView,
+  createUserView,
+  createUser: createUserMVC,
+  editUserView,
+  updateUser: updateUserMVC,
+  getUserByIdView,
+} = userController_MVC;
 
-router.get("/api", getAll);
-router.get("/api/:id", getById);
-router.get("/api/email", getUserByEmail); // Get user by email
-router.post("/api", createAPI); // API endpoint for creating users (returns JSON)
-router.post("/create", create);
-router.post("/edit/:id", update);
-router.put("/:id", update);
-router.delete("/:id", deleteUser);
+const {
+  getAllUsers,
+  getUserById,
+  createUser,
+  getUserByEmail,
+  updateUser,
+  deleteUser,
+} = userController;
+
+router.get("/api", getAllUsers);
+router.get("/api/email", getUserByEmail);
+router.get("/api/:id", getUserById);
+router.post("/api", createUser);
+router.put("/api/:id", updateUser);
+router.delete("/api/:id", deleteUser);
+
+router.get("/", getAllUsersView);
+router.get("/create", createUserView);
+router.post("/create", createUserMVC);
+router.get("/edit/:id", editUserView);
+router.post("/edit/:id", updateUserMVC);
+router.get("/:id", getUserByIdView);
 
 export default router;
