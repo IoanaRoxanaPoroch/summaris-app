@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from "../constants/messages.js";
 import { subscriptionRepository } from "../repositories/subscriptionRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
 
@@ -9,12 +10,12 @@ const PLAN_CONFIG = {
 
 export const getSubscriptionByUserId = async (userId) => {
   if (!userId) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const user = await userRepository.getUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const subscription = await subscriptionRepository.getSubscriptionByUserId(
@@ -32,12 +33,12 @@ export const getSubscriptionByUserId = async (userId) => {
 
 export const getSubscriptionByUserEmail = async (email) => {
   if (!email) {
-    throw new Error("Email is required");
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
   }
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const subscription = await subscriptionRepository.getSubscriptionByUserId(
@@ -55,21 +56,21 @@ export const getSubscriptionByUserEmail = async (email) => {
 
 export const selectPlan = async (email, plan) => {
   if (!email) {
-    throw new Error("Email is required");
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
   }
 
   if (!plan) {
-    throw new Error("Plan is required");
+    throw new Error(ERROR_MESSAGES.PLAN_REQUIRED);
   }
 
   const planCfg = PLAN_CONFIG[plan];
   if (!planCfg) {
-    throw new Error("Planul selectat nu există");
+    throw new Error(ERROR_MESSAGES.PLAN_NOT_FOUND);
   }
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error("User cu acest email nu există");
+    throw new Error(ERROR_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS);
   }
 
   const subscriptionData = {
@@ -84,12 +85,12 @@ export const selectPlan = async (email, plan) => {
 
 export const upsertSubscription = async (userId, data) => {
   if (!userId) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const user = await userRepository.getUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return subscriptionRepository.upsertSubscription(userId, data);

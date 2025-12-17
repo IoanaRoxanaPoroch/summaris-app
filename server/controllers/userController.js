@@ -1,3 +1,8 @@
+import {
+  DETAIL_MESSAGES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
 import * as userService from "../services/userService.js";
 
 const userController = {
@@ -7,8 +12,8 @@ const userController = {
 
       if (!first_name || !last_name || !email) {
         return res.status(400).json({
-          error: "All fields are required",
-          message: "First name, last name, and email are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+          message: DETAIL_MESSAGES.REQUIRED_FIELDS_NAME_LASTNAME_EMAIL,
         });
       }
 
@@ -23,7 +28,7 @@ const userController = {
       try {
         const createdUser = await userService.createUser(userData);
         res.status(201).json({
-          message: "User created successfully",
+          message: SUCCESS_MESSAGES.USER_CREATED,
           user: {
             id: createdUser.id,
             first_name: createdUser.first_name,
@@ -33,10 +38,10 @@ const userController = {
           },
         });
       } catch (err) {
-        if (err.message === "User already exists") {
+        if (err.message === ERROR_MESSAGES.USER_ALREADY_EXISTS) {
           const existingUser = await userService.getUserByEmail(email);
           return res.status(200).json({
-            message: "User already exists",
+            message: SUCCESS_MESSAGES.USER_ALREADY_EXISTS,
             user: {
               id: existingUser.id,
               first_name: existingUser.first_name,
@@ -51,13 +56,13 @@ const userController = {
     } catch (err) {
       if (err.code === "P2002") {
         return res.status(409).json({
-          error: "Email already exists",
-          message: "A user with this email already exists",
+          error: ERROR_MESSAGES.USER_ALREADY_EXISTS_EMAIL,
+          message: ERROR_MESSAGES.USER_WITH_EMAIL_EXISTS,
         });
       }
       res.status(400).json({
         error: err.message,
-        message: "Failed to create user",
+        message: ERROR_MESSAGES.USER_CREATE_FAILED,
       });
     }
   },
@@ -67,8 +72,8 @@ const userController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email is required",
-          message: "Please provide an email address",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_PLEASE_PROVIDE,
         });
       }
 
@@ -83,14 +88,14 @@ const userController = {
         },
       });
     } catch (err) {
-      if (err.message === "User not found") {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          message: "User not found",
+          message: ERROR_MESSAGES.USER_NOT_FOUND,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to get user",
+        message: ERROR_MESSAGES.USER_FETCH_FAILED,
       });
     }
   },

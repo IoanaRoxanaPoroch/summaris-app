@@ -6,6 +6,7 @@ import clerkWebhookRoutes from "./routes/clerkWebhookRoute.js";
 import documentRoutes from "./routes/documentRoute.js";
 import subscriptionRoutes from "./routes/subscriptionRoute.js";
 import userRoutes from "./routes/userRoute.js";
+import { SUCCESS_MESSAGES } from "./constants/messages.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,7 +34,7 @@ app.set("view engine", "pug");
 // Root route - API information
 app.get("/", (req, res) => {
   res.json({
-    message: "Summaris API Server",
+    message: SUCCESS_MESSAGES.API_SERVER_NAME,
     version: "1.0.0",
     endpoints: {
       users: {

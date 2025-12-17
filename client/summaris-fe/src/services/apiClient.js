@@ -1,7 +1,8 @@
 import axios from "axios";
 
 // Configure base URL for API from environment variable
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // Create axios instance with default configuration
 const apiClient = axios.create({
@@ -100,7 +101,6 @@ export const del = async (endpoint, config = {}) => {
  */
 const handleError = (error) => {
   if (error.response) {
-    // Server responded with error status
     return {
       message: error.response.data?.message || error.message,
       status: error.response.status,
@@ -108,12 +108,11 @@ const handleError = (error) => {
       error: error.response.data?.error || error.message,
     };
   } else if (error.request) {
-    // Request was made but no response received
     return {
-      message: "No response from server",
+      message: "Nu există răspuns de la server",
       status: null,
       data: null,
-      error: "Network error",
+      error: "Eroare de rețea",
     };
   } else {
     // Error setting up the request
@@ -126,10 +125,8 @@ const handleError = (error) => {
   }
 };
 
-// Export the axios instance for advanced usage
 export { apiClient };
 
-// Export default object with all methods
 export default {
   get,
   post,
@@ -138,6 +135,3 @@ export default {
   delete: del,
   apiClient,
 };
-
-
-

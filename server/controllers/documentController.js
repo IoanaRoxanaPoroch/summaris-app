@@ -1,3 +1,8 @@
+import {
+  DETAIL_MESSAGES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
 import * as documentService from "../services/documentService.js";
 import * as userService from "../services/userService.js";
 
@@ -29,8 +34,8 @@ const documentController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to fetch documents",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_DOCUMENTS,
         });
       }
 
@@ -38,15 +43,15 @@ const documentController = {
       res.json({ documents: documents || [] });
     } catch (err) {
       console.error("Get documents by email error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch documents",
+        message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
       });
     }
   },
@@ -56,8 +61,8 @@ const documentController = {
       const { userId } = req.query;
       if (!userId) {
         return res.status(400).json({
-          error: "UserId required",
-          message: "UserId is required to fetch documents",
+          error: ERROR_MESSAGES.USER_ID_REQUIRED,
+          message: DETAIL_MESSAGES.USER_ID_REQUIRED_FOR_DOCUMENTS,
         });
       }
 
@@ -65,15 +70,15 @@ const documentController = {
       res.json({ documents: documents || [] });
     } catch (err) {
       console.error("Get documents by userId error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this id does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch documents",
+        message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
       });
     }
   },
@@ -85,7 +90,7 @@ const documentController = {
 
       if (!name || !size || !s3_url || !user_id) {
         return res.status(400).render("documentEdit", {
-          error: "All fields are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
           document: { ...req.body, id: documentId },
         });
       }
@@ -134,8 +139,8 @@ const documentController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to fetch summaries",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_SUMMARIES,
         });
       }
 
@@ -145,15 +150,15 @@ const documentController = {
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch summaries",
+        message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
       });
     }
   },
@@ -165,8 +170,8 @@ const documentController = {
 
       if (!userId) {
         return res.status(400).json({
-          error: "UserId required",
-          message: "UserId is required to fetch summaries",
+          error: ERROR_MESSAGES.USER_ID_REQUIRED,
+          message: DETAIL_MESSAGES.USER_ID_REQUIRED_FOR_SUMMARIES,
         });
       }
 
@@ -176,15 +181,15 @@ const documentController = {
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries by userId error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this id does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch summaries",
+        message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
       });
     }
   },
@@ -196,8 +201,8 @@ const documentController = {
 
       if (!email || !name || !size) {
         return res.status(400).json({
-          error: "Missing required fields",
-          message: "Email, name, and size are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+          message: DETAIL_MESSAGES.REQUIRED_FIELDS_EMAIL_NAME_SIZE,
         });
       }
 
@@ -205,7 +210,7 @@ const documentController = {
       const result = await documentService.uploadDocument(email, documentData);
 
       res.status(201).json({
-        message: "Document uploaded successfully",
+        message: SUCCESS_MESSAGES.DOCUMENT_UPLOADED,
         document: {
           id: result.document.id,
           name: result.document.name,
@@ -216,22 +221,22 @@ const documentController = {
       });
     } catch (err) {
       console.error("Upload error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
       if (err.message.includes("limita de 3 încercări")) {
         return res.status(403).json({
-          error: "Limit reached",
+          error: "Limită atinsă",
           message: err.message,
           limitReached: true,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to upload document",
+        message: ERROR_MESSAGES.DOCUMENT_UPLOAD_FAILED,
       });
     }
   },
@@ -243,16 +248,14 @@ const documentController = {
 
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to verify document ownership",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_OWNERSHIP_CHECK,
         });
       }
 
       const user = await userService.getUserByEmail(email);
       await documentService.verifyDocumentOwnership(id, user.id);
 
-      // TODO: Aici va fi logica de generare rezumat (AI/ML service)
-      // Pentru moment, returnăm un rezumat mock
       const mockSummary = {
         id: `summary-${Date.now()}`,
         content:
@@ -262,32 +265,32 @@ const documentController = {
       };
 
       res.json({
-        message: "Summary generated successfully",
+        message: SUCCESS_MESSAGES.SUMMARY_GENERATED,
         summary: mockSummary,
       });
     } catch (err) {
       console.error("Summarize error:", err);
-      if (err.message === "User not found") {
+      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
-      if (err.message === "Document not found") {
+      if (err.message === "Document not found" || err.message === ERROR_MESSAGES.DOCUMENT_NOT_FOUND) {
         return res.status(404).json({
-          error: "Document not found",
-          message: "Document with this ID does not exist",
+          error: ERROR_MESSAGES.DOCUMENT_NOT_FOUND,
+          message: DETAIL_MESSAGES.DOCUMENT_WITH_ID_NOT_EXISTS,
         });
       }
       if (err.message.includes("permission")) {
         return res.status(403).json({
-          error: "Unauthorized",
-          message: "You don't have permission to access this document",
+          error: ERROR_MESSAGES.UNAUTHORIZED,
+          message: ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to generate summary",
+        message: ERROR_MESSAGES.SUMMARY_GENERATION_FAILED,
       });
     }
   },

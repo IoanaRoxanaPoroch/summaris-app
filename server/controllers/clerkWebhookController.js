@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/messages.js";
 import { documentRepository } from "../repositories/documentRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
 
@@ -13,15 +14,15 @@ const clerkWebhookController = {
 
       if (!email) {
         return res.status(400).json({
-          error: "Email is required",
-          message: "User email not found in webhook payload",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: ERROR_MESSAGES.WEBHOOK_EMAIL_NOT_FOUND_IN_PAYLOAD,
         });
       }
 
       const existingUser = await userRepository.getUserByEmail(email);
       if (existingUser) {
         return res.status(200).json({
-          message: "User already exists in database",
+          message: SUCCESS_MESSAGES.USER_EXISTS_DB,
           user: existingUser,
         });
       }
@@ -38,7 +39,7 @@ const clerkWebhookController = {
       const createdUser = await userRepository.createUser(userData);
 
       res.status(201).json({
-        message: "User synced to database successfully",
+        message: SUCCESS_MESSAGES.USER_SYNCED_DB,
         user: {
           id: createdUser.id,
           clerk_id: clerkUserId,
@@ -51,13 +52,13 @@ const clerkWebhookController = {
       console.error("Error handling Clerk webhook:", err);
       if (err.code === "P2002") {
         return res.status(409).json({
-          error: "Email already exists",
-          message: "A user with this email already exists",
+          error: ERROR_MESSAGES.USER_ALREADY_EXISTS_EMAIL,
+          message: ERROR_MESSAGES.USER_WITH_EMAIL_EXISTS,
         });
       }
       res.status(500).json({
         error: err.message,
-        message: "Failed to sync user to database",
+        message: ERROR_MESSAGES.USER_SYNC_FAILED_DB,
       });
     }
   },
@@ -70,8 +71,8 @@ const clerkWebhookController = {
 
       if (!clerkUserId) {
         return res.status(400).json({
-          error: "User ID is required",
-          message: "User ID not found in webhook payload",
+          error: ERROR_MESSAGES.USER_ID_REQUIRED,
+          message: ERROR_MESSAGES.WEBHOOK_USER_ID_NOT_FOUND_IN_PAYLOAD,
         });
       }
 
@@ -81,7 +82,7 @@ const clerkWebhookController = {
         : null;
       if (!existingUser) {
         return res.status(200).json({
-          message: "User not found in database, nothing to delete",
+          message: SUCCESS_MESSAGES.USER_NOT_FOUND_NOTHING_TO_DELETE,
         });
       }
 
@@ -102,14 +103,14 @@ const clerkWebhookController = {
       await userRepository.deleteUser(existingUser.id);
 
       res.status(200).json({
-        message: "User deleted from database successfully",
+        message: SUCCESS_MESSAGES.USER_DELETED_DB,
         deletedUserId: clerkUserId,
       });
     } catch (err) {
       console.error("Error handling user deletion webhook:", err);
       res.status(500).json({
         error: err.message,
-        message: "Failed to delete user from database",
+        message: ERROR_MESSAGES.USER_DELETE_FAILED_DB,
       });
     }
   },
@@ -123,19 +124,23 @@ const clerkWebhookController = {
           return await this.handleUserCreated(req, res);
 
         case "user.updated":
-          return res.status(200).json({ message: "User update received" });
+          return res
+            .status(200)
+            .json({ message: SUCCESS_MESSAGES.USER_UPDATE_WEBHOOK_RECEIVED });
 
         case "user.deleted":
           return await this.handleUserDeleted(req, res);
 
         default:
-          return res.status(200).json({ message: "Webhook event not handled" });
+          return res
+            .status(200)
+            .json({ message: SUCCESS_MESSAGES.WEBHOOK_EVENT_UNHANDLED });
       }
     } catch (err) {
       console.error("Error handling webhook:", err);
       res.status(500).json({
         error: err.message,
-        message: "Failed to process webhook",
+        message: ERROR_MESSAGES.WEBHOOK_PROCESS_FAILED,
       });
     }
   },

@@ -1,3 +1,4 @@
+import { ERROR_MESSAGES } from "../constants/messages.js";
 import * as userService from "../services/userService.js";
 
 const userController_MVC = {
@@ -11,7 +12,7 @@ const userController_MVC = {
 
       if (!first_name || !last_name || !email || !password) {
         return res.status(400).render("userCreate", {
-          error: "All fields are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
           user: req.body ?? {},
         });
       }
@@ -42,7 +43,10 @@ const userController_MVC = {
       if (!user) {
         return res
           .status(404)
-          .render("userEdit", { user: null, error: "User not found" });
+          .render("userEdit", {
+            user: null,
+            error: ERROR_MESSAGES.USER_NOT_FOUND,
+          });
       }
 
       return res.render("userEdit", { user, error: null });
@@ -61,7 +65,10 @@ const userController_MVC = {
       if (!existing) {
         return res
           .status(404)
-          .render("userEdit", { user: null, error: "User not found" });
+          .render("userEdit", {
+            user: null,
+            error: ERROR_MESSAGES.USER_NOT_FOUND,
+          });
       }
 
       const payload = {
@@ -98,7 +105,7 @@ const userController_MVC = {
     try {
       const { id } = req.params;
 
-      if (id === "create" || id === "api") {
+      if (id === "create") {
         return res
           .status(404)
           .render("userDetails", { user: null, error: "Invalid user ID" });
@@ -108,7 +115,10 @@ const userController_MVC = {
       if (!user) {
         return res
           .status(404)
-          .render("userDetails", { user: null, error: "User not found" });
+          .render("userDetails", {
+            user: null,
+            error: ERROR_MESSAGES.USER_NOT_FOUND,
+          });
       }
 
       return res.render("userDetails", { user, error: null });

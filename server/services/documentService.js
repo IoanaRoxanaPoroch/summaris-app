@@ -1,5 +1,6 @@
 import { documentRepository } from "../repositories/documentRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
+import { ERROR_MESSAGES } from "../constants/messages.js";
 
 export const getAllDocuments = async () => {
   return documentRepository.getAllDocuments();
@@ -7,20 +8,20 @@ export const getAllDocuments = async () => {
 
 export const createDocument = async (data) => {
   if (!data.name) {
-    throw new Error("Name is required");
+    throw new Error(ERROR_MESSAGES.NAME_REQUIRED);
   }
 
   if (!data.size) {
-    throw new Error("Size is required");
+    throw new Error(ERROR_MESSAGES.SIZE_REQUIRED);
   }
 
   if (!data.user_id) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const user = await userRepository.getUserById(data.user_id);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return documentRepository.createDocument(data);
@@ -28,12 +29,12 @@ export const createDocument = async (data) => {
 
 export const getDocumentById = async (id) => {
   if (!id) {
-    throw new Error("Document ID is required");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
   }
 
   const document = await documentRepository.getDocumentById(id);
   if (!document) {
-    throw new Error("Document not found");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
   return document;
@@ -41,12 +42,12 @@ export const getDocumentById = async (id) => {
 
 export const getDocumentsByUserId = async (userId) => {
   if (!userId) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const user = await userRepository.getUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return documentRepository.getDocumentsByUserId(userId);
@@ -54,12 +55,12 @@ export const getDocumentsByUserId = async (userId) => {
 
 export const getDocumentsByUserEmail = async (email) => {
   if (!email) {
-    throw new Error("Email is required");
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
   }
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return documentRepository.getDocumentsByUserId(user.id);
@@ -67,12 +68,12 @@ export const getDocumentsByUserEmail = async (email) => {
 
 export const updateDocument = async (id, data) => {
   if (!id) {
-    throw new Error("Document ID is required");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
   }
 
   const document = await documentRepository.getDocumentById(id);
   if (!document) {
-    throw new Error("Document not found");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
   return documentRepository.updateDocument(id, data);
@@ -80,12 +81,12 @@ export const updateDocument = async (id, data) => {
 
 export const deleteDocument = async (id) => {
   if (!id) {
-    throw new Error("Document ID is required");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
   }
 
   const document = await documentRepository.getDocumentById(id);
   if (!document) {
-    throw new Error("Document not found");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
   return documentRepository.deleteDocument(id);
@@ -93,22 +94,20 @@ export const deleteDocument = async (id) => {
 
 export const uploadDocument = async (email, documentData) => {
   if (!email) {
-    throw new Error("Email is required");
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
   }
 
   if (!documentData.name || !documentData.size) {
-    throw new Error("Name and size are required");
+    throw new Error(ERROR_MESSAGES.NAME_AND_SIZE_REQUIRED);
   }
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   if (user.number_of_attempts >= 3) {
-    throw new Error(
-      "Ai atins limita de 3 încercări gratuite. Te rugăm să te abonezi pentru a continua."
-    );
+    throw new Error(ERROR_MESSAGES.FREE_ATTEMPTS_LIMIT_REACHED);
   }
 
   const data = {
@@ -129,12 +128,12 @@ export const uploadDocument = async (email, documentData) => {
 
 export const getSummariesByUserId = async (userId) => {
   if (!userId) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const user = await userRepository.getUserById(userId);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return documentRepository.getSummariesByUserId(userId);
@@ -142,12 +141,12 @@ export const getSummariesByUserId = async (userId) => {
 
 export const getSummariesByUserEmail = async (email) => {
   if (!email) {
-    throw new Error("Email is required");
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
   }
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error("User not found");
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   return documentRepository.getSummariesByUserId(user.id);
@@ -155,20 +154,20 @@ export const getSummariesByUserEmail = async (email) => {
 
 export const verifyDocumentOwnership = async (documentId, userId) => {
   if (!documentId) {
-    throw new Error("Document ID is required");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
   }
 
   if (!userId) {
-    throw new Error("User ID is required");
+    throw new Error(ERROR_MESSAGES.USER_ID_REQUIRED);
   }
 
   const document = await documentRepository.getDocumentById(documentId);
   if (!document) {
-    throw new Error("Document not found");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
   if (document.user_id !== userId) {
-    throw new Error("You don't have permission to access this document");
+    throw new Error(ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED);
   }
 
   return document;
@@ -188,3 +187,4 @@ export const formatSummaries = (documents) => {
       created_at: doc.summary.created_at,
     }));
 };
+
