@@ -2,7 +2,7 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const usersRepository = {
+export const userRepository = {
   async createUser(data) {
     return prisma.user.create({ data });
   },
@@ -20,6 +20,7 @@ export const usersRepository = {
   },
 
   async updateUser(id, data) {
+    console.log("edited user", data);
     return prisma.user.update({
       where: { id },
       data,

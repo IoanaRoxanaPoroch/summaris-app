@@ -1,5 +1,10 @@
-import { documentsRepository } from "../repositories/documentRepository.js";
-import { usersRepository } from "../repositories/userRepository.js";
+import {
+  DETAIL_MESSAGES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
+import * as documentService from "../services/documentService.js";
+import * as userService from "../services/userService.js";
 
 const documentController = {
   async createView(req, res) {
@@ -8,7 +13,7 @@ const documentController = {
 
   async getAll(req, res) {
     try {
-      const documents = await documentsRepository.getAllDocuments();
+      const documents = await documentService.getAllDocuments();
       res.json(documents);
     } catch (err) {
       res.status(500).json({ message: err.message });
@@ -17,7 +22,7 @@ const documentController = {
 
   async getById(req, res) {
     try {
-      const document = await documentsRepository.getDocumentById(req.params.id);
+      const document = await documentService.getDocumentById(req.params.id);
       res.json(document);
     } catch (err) {
       res.status(404).json({ message: err.message });
@@ -29,26 +34,24 @@ const documentController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to fetch documents",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_DOCUMENTS,
         });
       }
 
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
-        });
-      }
-
-      const documents = await documentsRepository.getDocumentsByUserId(user.id);
+      const documents = await documentService.getDocumentsByUserEmail(email);
       res.json({ documents: documents || [] });
     } catch (err) {
       console.error("Get documents by email error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch documents",
+        message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
       });
     }
   },
@@ -58,26 +61,24 @@ const documentController = {
       const { userId } = req.query;
       if (!userId) {
         return res.status(400).json({
-          error: "UserId required",
-          message: "UserId is required to fetch documents",
+          error: ERROR_MESSAGES.USER_ID_REQUIRED,
+          message: DETAIL_MESSAGES.USER_ID_REQUIRED_FOR_DOCUMENTS,
         });
       }
 
-      const user = await usersRepository.getUserById(userId);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this id does not exist",
-        });
-      }
-
-      const documents = await documentsRepository.getDocumentsByUserId(user.id);
+      const documents = await documentService.getDocumentsByUserId(userId);
       res.json({ documents: documents || [] });
     } catch (err) {
-      console.error("Get documents by email error:", err);
+      console.error("Get documents by userId error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch documents",
+        message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
       });
     }
   },
@@ -89,7 +90,7 @@ const documentController = {
 
       if (!name || !size || !s3_url || !user_id) {
         return res.status(400).render("documentEdit", {
-          error: "All fields are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
           document: { ...req.body, id: documentId },
         });
       }
@@ -101,25 +102,30 @@ const documentController = {
         user_id,
       };
 
-      const updatedDocument = await documentsRepository.updateDocument(
+      const updatedDocument = await documentService.updateDocument(
         documentId,
         updateData
       );
       res.redirect(`/documents/${updatedDocument.id}`);
     } catch (err) {
-      const document = await documentsRepository
-        .getDocumentById(req.params.id)
-        .catch(() => null);
-      res.status(400).render("documentEdit", {
-        error: err.message,
-        document: document || { ...req.body, id: req.params.id },
-      });
+      try {
+        const document = await documentService.getDocumentById(req.params.id);
+        res.status(400).render("documentEdit", {
+          error: err.message,
+          document: document || { ...req.body, id: req.params.id },
+        });
+      } catch {
+        res.status(400).render("documentEdit", {
+          error: err.message,
+          document: { ...req.body, id: req.params.id },
+        });
+      }
     }
   },
 
   async deleteDoc(req, res) {
     try {
-      const deletedDocument = await documentsRepository.deleteDocument(
+      const deletedDocument = await documentService.deleteDocument(
         req.params.id
       );
       res.json(deletedDocument);
@@ -133,40 +139,26 @@ const documentController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to fetch summaries",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_SUMMARIES,
         });
       }
 
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
-        });
-      }
-
-      const documents = await documentsRepository.getSummariesByUserId(user.id);
-
-      const summaries = documents
-        .filter((doc) => doc.summary)
-        .map((doc) => ({
-          documentId: doc.id,
-          documentName: doc.name,
-          documentSize: doc.size,
-          documentCreatedAt: doc.created_at,
-          summaryId: doc.summary.id,
-          content: doc.summary.content,
-          size: doc.summary.size,
-          created_at: doc.summary.created_at,
-        }));
+      const documents = await documentService.getSummariesByUserEmail(email);
+      const summaries = documentService.formatSummaries(documents);
 
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch summaries",
+        message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
       });
     }
   },
@@ -178,49 +170,26 @@ const documentController = {
 
       if (!userId) {
         return res.status(400).json({
-          error: "UserId required",
-          message: "UserId is required to fetch summaries",
+          error: ERROR_MESSAGES.USER_ID_REQUIRED,
+          message: DETAIL_MESSAGES.USER_ID_REQUIRED_FOR_SUMMARIES,
         });
       }
 
-      const user = await usersRepository.getUserById(userId);
-      console.log(
-        "getSummariesByUserId - User found:",
-        user ? user.id : "null"
-      );
-
-      if (!user) {
-        console.log(
-          "getSummariesByUserId - User not found for userId:",
-          userId
-        );
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this id does not exist",
-        });
-      }
-
-      const documents = await documentsRepository.getSummariesByUserId(user.id);
-
-      const summaries = documents
-        .filter((doc) => doc.summary)
-        .map((doc) => ({
-          documentId: doc.id,
-          documentName: doc.name,
-          documentSize: doc.size,
-          documentCreatedAt: doc.created_at,
-          summaryId: doc.summary.id,
-          content: doc.summary.content,
-          size: doc.summary.size,
-          created_at: doc.summary.created_at,
-        }));
+      const documents = await documentService.getSummariesByUserId(userId);
+      const summaries = documentService.formatSummaries(documents);
 
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries by userId error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to fetch summaries",
+        message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
       });
     }
   },
@@ -232,60 +201,42 @@ const documentController = {
 
       if (!email || !name || !size) {
         return res.status(400).json({
-          error: "Missing required fields",
-          message: "Email, name, and size are required",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+          message: DETAIL_MESSAGES.REQUIRED_FIELDS_EMAIL_NAME_SIZE,
         });
       }
 
-      // Găsește user-ul după email
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
-        });
-      }
-
-      // Verifică limita de încercări (3 încercări gratuite)
-      if (user.number_of_attempts >= 3) {
-        return res.status(403).json({
-          error: "Limit reached",
-          message:
-            "Ai atins limita de 3 încercări gratuite. Te rugăm să te abonezi pentru a continua.",
-          limitReached: true,
-        });
-      }
-
-      // Creează documentul
-      const documentData = {
-        name,
-        size: parseInt(size),
-        s3_url: s3_url || "",
-        user_id: user.id,
-      };
-
-      const createdDocument = await documentsRepository.createDocument(
-        documentData
-      );
-
-      // Incrementează numărul de încercări
-      await usersRepository.incrementAttempts(user.id);
+      const documentData = { name, size, s3_url };
+      const result = await documentService.uploadDocument(email, documentData);
 
       res.status(201).json({
-        message: "Document uploaded successfully",
+        message: SUCCESS_MESSAGES.DOCUMENT_UPLOADED,
         document: {
-          id: createdDocument.id,
-          name: createdDocument.name,
-          size: createdDocument.size,
-          created_at: createdDocument.created_at,
+          id: result.document.id,
+          name: result.document.name,
+          size: result.document.size,
+          created_at: result.document.created_at,
         },
-        remainingAttempts: 3 - (user.number_of_attempts + 1),
+        remainingAttempts: result.remainingAttempts,
       });
     } catch (err) {
       console.error("Upload error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
+      if (err.message.includes("limita de 3 încercări")) {
+        return res.status(403).json({
+          error: "Limită atinsă",
+          message: err.message,
+          limitReached: true,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to upload document",
+        message: ERROR_MESSAGES.DOCUMENT_UPLOAD_FAILED,
       });
     }
   },
@@ -297,39 +248,14 @@ const documentController = {
 
       if (!email) {
         return res.status(400).json({
-          error: "Email required",
-          message: "Email is required to verify document ownership",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_REQUIRED_FOR_OWNERSHIP_CHECK,
         });
       }
 
-      // Găsește user-ul după email
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User with this email does not exist",
-        });
-      }
+      const user = await userService.getUserByEmail(email);
+      await documentService.verifyDocumentOwnership(id, user.id);
 
-      // Găsește documentul
-      const document = await documentsRepository.getDocumentById(id);
-      if (!document) {
-        return res.status(404).json({
-          error: "Document not found",
-          message: "Document with this ID does not exist",
-        });
-      }
-
-      // Verifică dacă documentul aparține user-ului
-      if (document.user_id !== user.id) {
-        return res.status(403).json({
-          error: "Unauthorized",
-          message: "You don't have permission to access this document",
-        });
-      }
-
-      // TODO: Aici va fi logica de generare rezumat (AI/ML service)
-      // Pentru moment, returnăm un rezumat mock
       const mockSummary = {
         id: `summary-${Date.now()}`,
         content:
@@ -339,14 +265,32 @@ const documentController = {
       };
 
       res.json({
-        message: "Summary generated successfully",
+        message: SUCCESS_MESSAGES.SUMMARY_GENERATED,
         summary: mockSummary,
       });
     } catch (err) {
       console.error("Summarize error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
+      if (err.message === ERROR_MESSAGES.DOCUMENT_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.DOCUMENT_NOT_FOUND,
+          message: DETAIL_MESSAGES.DOCUMENT_WITH_ID_NOT_EXISTS,
+        });
+      }
+      if (err.message === ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED) {
+        return res.status(403).json({
+          error: ERROR_MESSAGES.UNAUTHORIZED,
+          message: ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to generate summary",
+        message: ERROR_MESSAGES.SUMMARY_GENERATION_FAILED,
       });
     }
   },

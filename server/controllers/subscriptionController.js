@@ -1,11 +1,9 @@
-import { subscriptionRepository } from "../repositories/subscriptionRepository.js";
-import { usersRepository } from "../repositories/userRepository.js";
-
-const PLAN_CONFIG = {
-  free: { name: "Gratuit", price: 0, status: "active" },
-  pro: { name: "Pro", price: 100, status: "active" },
-  premium: { name: "Premium", price: 400, status: "active" },
-};
+import {
+  DETAIL_MESSAGES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
+import * as subscriptionService from "../services/subscriptionService.js";
 
 const subscriptionController = {
   async getByEmail(req, res) {
@@ -13,36 +11,29 @@ const subscriptionController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Missing email",
-          message: "Email este necesar",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_PLEASE_PROVIDE,
         });
       }
 
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User cu acest email nu există",
-        });
-      }
-
-      const subscription = await subscriptionRepository.getSubscriptionByUserId(
-        user.id
+      const subscription = await subscriptionService.getSubscriptionByUserEmail(
+        email
       );
 
       return res.status(200).json({
-        subscription:
-          subscription || {
-            name: PLAN_CONFIG.free.name,
-            price: PLAN_CONFIG.free.price,
-            status: PLAN_CONFIG.free.status,
-          },
+        subscription,
       });
     } catch (err) {
       console.error("Get subscription error:", err);
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
       return res.status(500).json({
         error: err.message,
-        message: "Nu s-a putut obține planul",
+        message: ERROR_MESSAGES.SUBSCRIPTION_FETCH_FAILED,
       });
     }
   },
@@ -53,52 +44,40 @@ const subscriptionController = {
 
       if (!email || !plan) {
         return res.status(400).json({
-          error: "Missing required fields",
-          message: "Email și plan sunt necesare",
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+          message: DETAIL_MESSAGES.REQUIRED_FIELDS_EMAIL_PLAN,
         });
       }
 
-      const planCfg = PLAN_CONFIG[plan];
-      if (!planCfg) {
-        return res.status(400).json({
-          error: "Invalid plan",
-          message: "Planul selectat nu există",
-        });
-      }
-
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          error: "User not found",
-          message: "User cu acest email nu există",
-        });
-      }
-
-      const subscriptionData = {
-        name: planCfg.name,
-        price: planCfg.price,
-        stripe_subscription_id: "", // placeholder
-        status: planCfg.status,
-      };
-
-      const subscription = await subscriptionRepository.upsertSubscription(
-        user.id,
-        subscriptionData
-      );
+      const subscription = await subscriptionService.selectPlan(email, plan);
 
       return res.status(200).json({
-        message: "Plan selectat cu succes",
+        message: SUCCESS_MESSAGES.PLAN_SELECTED,
         subscription,
       });
     } catch (err) {
       console.error("Select plan error:", err);
+      if (
+        err.message === ERROR_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS ||
+        err.message === ERROR_MESSAGES.USER_NOT_FOUND
+      ) {
+        return res.status(404).json({
+          error: ERROR_MESSAGES.USER_NOT_FOUND,
+          message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
+        });
+      }
+      if (err.message === ERROR_MESSAGES.PLAN_NOT_FOUND) {
+        return res.status(400).json({
+          error: ERROR_MESSAGES.INVALID_PLAN_EN,
+          message: ERROR_MESSAGES.PLAN_NOT_FOUND,
+        });
+      }
       return res.status(500).json({
         error: err.message,
-        message: "Nu s-a putut salva planul",
+        message: ERROR_MESSAGES.SUBSCRIPTION_SAVE_FAILED,
       });
     }
   },
 };
 
 export default subscriptionController;
-

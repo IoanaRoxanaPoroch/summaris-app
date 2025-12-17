@@ -1,63 +1,19 @@
-import { usersRepository } from "../repositories/userRepository.js";
+import {
+  DETAIL_MESSAGES,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
+import * as userService from "../services/userService.js";
 
 const userController = {
-  async createView(req, res) {
-    res.render("userCreate", { error: null });
-  },
-
-  async create(req, res) {
-    try {
-      const { first_name, last_name, email, password } = req.body;
-
-      if (!first_name || !last_name || !email || !password) {
-        return res.status(400).render("userCreate", {
-          error: "All fields are required",
-          user: req.body,
-        });
-      }
-
-      const userData = {
-        first_name,
-        last_name,
-        email,
-        password,
-        number_of_attempts: 0,
-      };
-
-      const createdUser = await usersRepository.createUser(userData);
-      res.redirect(`/users/${createdUser.id}`);
-    } catch (err) {
-      res.status(400).render("userCreate", {
-        error: err.message,
-        user: req.body,
-      });
-    }
-  },
-
-  async createAPI(req, res) {
+  async createUser(req, res) {
     try {
       const { first_name, last_name, email, password } = req.body;
 
       if (!first_name || !last_name || !email) {
         return res.status(400).json({
-          error: "All fields are required",
-          message: "First name, last name, and email are required",
-        });
-      }
-
-      // Verifică dacă utilizatorul există deja după email
-      const existingUserByEmail = await usersRepository.getUserByEmail(email);
-
-      if (existingUserByEmail) {
-        return res.status(200).json({
-          message: "User already exists",
-          user: {
-            id: existingUserByEmail.id,
-            first_name: existingUserByEmail.first_name,
-            last_name: existingUserByEmail.last_name,
-            email: existingUserByEmail.email,
-            created_at: existingUserByEmail.created_at,
-          },
+          error: ERROR_MESSAGES.REQUIRED_FIELDS_MISSING,
+          message: DETAIL_MESSAGES.REQUIRED_FIELDS_NAME_LASTNAME_EMAIL,
         });
       }
 
@@ -65,38 +21,48 @@ const userController = {
         first_name,
         last_name,
         email,
-        password: password || "", // Parolă opțională (Clerk gestionează autentificarea)
+        password: password || "",
         number_of_attempts: 0,
       };
 
-      console.log("UserData object:", JSON.stringify(userData, null, 2));
-      const createdUser = await usersRepository.createUser(userData);
-      console.log(
-        "User created successfully in database. Created ID:",
-        createdUser.id
-      );
-      console.log("Clerk ID:", createdUser.clerk_id);
-      res.status(201).json({
-        message: "User created successfully",
-        user: {
-          id: createdUser.id,
-          first_name: createdUser.first_name,
-          last_name: createdUser.last_name,
-          email: createdUser.email,
-          created_at: createdUser.created_at,
-        },
-      });
+      try {
+        const createdUser = await userService.createUser(userData);
+        res.status(201).json({
+          message: SUCCESS_MESSAGES.USER_CREATED,
+          user: {
+            id: createdUser.id,
+            first_name: createdUser.first_name,
+            last_name: createdUser.last_name,
+            email: createdUser.email,
+            created_at: createdUser.created_at,
+          },
+        });
+      } catch (err) {
+        if (err.message === ERROR_MESSAGES.USER_ALREADY_EXISTS) {
+          const existingUser = await userService.getUserByEmail(email);
+          return res.status(200).json({
+            message: SUCCESS_MESSAGES.USER_ALREADY_EXISTS,
+            user: {
+              id: existingUser.id,
+              first_name: existingUser.first_name,
+              last_name: existingUser.last_name,
+              email: existingUser.email,
+              created_at: existingUser.created_at,
+            },
+          });
+        }
+        throw err;
+      }
     } catch (err) {
       if (err.code === "P2002") {
-        // Prisma unique constraint error
         return res.status(409).json({
-          error: "Email already exists",
-          message: "A user with this email already exists",
+          error: ERROR_MESSAGES.USER_ALREADY_EXISTS_EMAIL,
+          message: ERROR_MESSAGES.USER_WITH_EMAIL_EXISTS,
         });
       }
       res.status(400).json({
         error: err.message,
-        message: "Failed to create user",
+        message: ERROR_MESSAGES.USER_CREATE_FAILED,
       });
     }
   },
@@ -106,18 +72,12 @@ const userController = {
       const { email } = req.query;
       if (!email) {
         return res.status(400).json({
-          error: "Email is required",
-          message: "Please provide an email address",
+          error: ERROR_MESSAGES.EMAIL_REQUIRED,
+          message: DETAIL_MESSAGES.EMAIL_PLEASE_PROVIDE,
         });
       }
 
-      const user = await usersRepository.getUserByEmail(email);
-      if (!user) {
-        return res.status(404).json({
-          message: "User not found",
-        });
-      }
-
+      const user = await userService.getUserByEmail(email);
       res.json({
         user: {
           id: user.id,
@@ -128,69 +88,48 @@ const userController = {
         },
       });
     } catch (err) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+        return res.status(404).json({
+          message: ERROR_MESSAGES.USER_NOT_FOUND,
+        });
+      }
       res.status(500).json({
         error: err.message,
-        message: "Failed to get user",
+        message: ERROR_MESSAGES.USER_FETCH_FAILED,
       });
     }
   },
 
-  async getAll(req, res) {
+  async getAllUsers(_, res) {
     try {
-      const users = await usersRepository.getAllUsers();
+      const users = await userService.getAllUsers();
       res.json(users);
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
   },
 
-  async getById(req, res) {
+  async getUserById(req, res) {
     try {
-      const user = await usersRepository.getUserById(req.params.id);
+      const user = await userService.getUserById(req.params.id);
       res.json(user);
     } catch (err) {
       res.status(404).json({ message: err.message });
     }
   },
 
-  async update(req, res) {
+  async updateUser(req, res) {
     try {
-      const { first_name, last_name, email, password } = req.body;
-      const userId = req.params.id;
-
-      if (!first_name || !last_name || !email) {
-        return res.status(400).render("userEdit", {
-          error: "First name, last name, and email are required",
-          user: { ...req.body, id: userId },
-        });
-      }
-
-      const updateData = {
-        first_name,
-        last_name,
-        email,
-      };
-
-      if (password && password.trim() !== "") {
-        updateData.password = password;
-      }
-
-      const updatedUser = await usersRepository.updateUser(userId, updateData);
-      res.redirect(`/users/${updatedUser.id}`);
+      const user = await userService.updateUser(req.params.id, req.body);
+      res.json(user);
     } catch (err) {
-      const user = await usersRepository
-        .getUserById(req.params.id)
-        .catch(() => null);
-      res.status(400).render("userEdit", {
-        error: err.message,
-        user: user || { ...req.body, id: req.params.id },
-      });
+      res.status(404).json({ message: err.message });
     }
   },
 
   async deleteUser(req, res) {
     try {
-      const deletedUser = await usersRepository.deleteUser(req.params.id);
+      const deletedUser = await userService.deleteUser(req.params.id);
       res.json(deletedUser);
     } catch (err) {
       res.status(500).json({ message: err.message });

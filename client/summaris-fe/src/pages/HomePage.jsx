@@ -109,17 +109,14 @@ export const HomePage = () => {
 
     try {
       const email = user.emailAddresses[0].emailAddress;
-      console.log("email", email);
 
-      // Trimite documentul la backend
       const response = await post("/documents/api/upload", {
         email,
         name: file.name,
         size: file.size,
-        s3_url: "", // TODO: Implementează upload la S3 dacă este necesar
+        s3_url: "",
       });
 
-      // Actualizează documentul în state
       setDocument({
         id: response.document.id,
         name: response.document.name,
