@@ -43,7 +43,7 @@ const documentController = {
       res.json({ documents: documents || [] });
     } catch (err) {
       console.error("Get documents by email error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
@@ -70,7 +70,7 @@ const documentController = {
       res.json({ documents: documents || [] });
     } catch (err) {
       console.error("Get documents by userId error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
@@ -150,7 +150,7 @@ const documentController = {
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
@@ -181,7 +181,7 @@ const documentController = {
       res.json({ summaries });
     } catch (err) {
       console.error("Get summaries by userId error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
@@ -221,7 +221,7 @@ const documentController = {
       });
     } catch (err) {
       console.error("Upload error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
@@ -270,19 +270,19 @@ const documentController = {
       });
     } catch (err) {
       console.error("Summarize error:", err);
-      if (err.message === "User not found" || err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
-      if (err.message === "Document not found" || err.message === ERROR_MESSAGES.DOCUMENT_NOT_FOUND) {
+      if (err.message === ERROR_MESSAGES.DOCUMENT_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.DOCUMENT_NOT_FOUND,
           message: DETAIL_MESSAGES.DOCUMENT_WITH_ID_NOT_EXISTS,
         });
       }
-      if (err.message.includes("permission")) {
+      if (err.message === ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED) {
         return res.status(403).json({
           error: ERROR_MESSAGES.UNAUTHORIZED,
           message: ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED,

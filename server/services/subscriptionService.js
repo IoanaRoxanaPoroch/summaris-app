@@ -70,7 +70,7 @@ export const selectPlan = async (email, plan) => {
 
   const user = await userRepository.getUserByEmail(email);
   if (!user) {
-    throw new Error(ERROR_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS);
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
   const subscriptionData = {
