@@ -84,3 +84,38 @@ export const DETAIL_MESSAGES = {
     "Prenumele, numele și emailul sunt obligatorii",
   REQUIRED_FIELDS_EMAIL_PLAN: "Email și plan sunt necesare",
 };
+
+export const LOG_MESSAGES = {
+  // Document Controller
+  GET_ALL_DOCUMENTS_ERROR: "Get all documents error",
+  GET_DOCUMENT_BY_ID_ERROR: "Get document by id error",
+  GET_DOCUMENTS_BY_EMAIL_ERROR: "Get documents by email error",
+  GET_DOCUMENTS_BY_USER_ID_ERROR: "Get documents by userId error",
+  UPDATE_DOCUMENT_ERROR: "Update document error",
+  DELETE_DOCUMENT_ERROR: "Delete document error",
+  GET_SUMMARIES_BY_EMAIL_ERROR: "Get summaries by email error",
+  GET_SUMMARIES_BY_USER_ID_ERROR: "Get summaries by userId error",
+  UPLOAD_DOCUMENT_ERROR: "Upload document error",
+  SUMMARIZE_DOCUMENT_ERROR: "Summarize document error",
+
+  // User Controller
+  CREATE_USER_ERROR: "Create user error",
+  GET_USER_BY_EMAIL_ERROR: "Get user by email error",
+  GET_ALL_USERS_ERROR: "Get all users error",
+  GET_USER_BY_ID_ERROR: "Get user by id error",
+  UPDATE_USER_ERROR: "Update user error",
+  DELETE_USER_ERROR: "Delete user error",
+
+  // Subscription Controller
+  GET_SUBSCRIPTION_ERROR: "Get subscription error",
+  SELECT_PLAN_ERROR: "Select plan error",
+
+  // Clerk Webhook Controller
+  CLERK_WEBHOOK_USER_CREATED_ERROR: "Error handling Clerk webhook - user created",
+  CLERK_WEBHOOK_USER_DELETED_ERROR: "Error handling Clerk webhook - user deleted",
+  CLERK_WEBHOOK_DELETE_DOCUMENT_ERROR: "Error deleting document in webhook",
+  CLERK_WEBHOOK_HANDLE_ERROR: "Error handling webhook",
+
+  // Express Middleware
+  UNHANDLED_EXPRESS_ERROR: "Unhandled error in Express",
+};
