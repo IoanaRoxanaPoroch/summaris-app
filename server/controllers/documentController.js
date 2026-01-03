@@ -1,10 +1,12 @@
 import {
   DETAIL_MESSAGES,
   ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
+  LOG_MESSAGES,
+  SUCCESS_MESSAGES
 } from "../constants/messages.js";
 import * as documentService from "../services/documentService.js";
 import * as userService from "../services/userService.js";
+import { logError } from "../utils/logger.js";
 
 const documentController = {
   async createView(req, res) {
@@ -16,6 +18,7 @@ const documentController = {
       const documents = await documentService.getAllDocuments();
       res.json(documents);
     } catch (err) {
+      logError(LOG_MESSAGES.GET_ALL_DOCUMENTS_ERROR, err);
       res.status(500).json({ message: err.message });
     }
   },
@@ -25,6 +28,7 @@ const documentController = {
       const document = await documentService.getDocumentById(req.params.id);
       res.json(document);
     } catch (err) {
+      logError(LOG_MESSAGES.GET_DOCUMENT_BY_ID_ERROR, err, { documentId: req.params.id });
       res.status(404).json({ message: err.message });
     }
   },
@@ -42,13 +46,13 @@ const documentController = {
       const documents = await documentService.getDocumentsByUserEmail(email);
       res.json({ documents: documents || [] });
     } catch (err) {
-      console.error("Get documents by email error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.GET_DOCUMENTS_BY_EMAIL_ERROR, err, { email });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
@@ -69,13 +73,13 @@ const documentController = {
       const documents = await documentService.getDocumentsByUserId(userId);
       res.json({ documents: documents || [] });
     } catch (err) {
-      console.error("Get documents by userId error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.GET_DOCUMENTS_BY_USER_ID_ERROR, err, { userId });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.DOCUMENTS_FETCH_FAILED,
@@ -108,6 +112,7 @@ const documentController = {
       );
       res.redirect(`/documents/${updatedDocument.id}`);
     } catch (err) {
+      logError(LOG_MESSAGES.UPDATE_DOCUMENT_ERROR, err, { documentId: req.params.id, body: req.body });
       try {
         const document = await documentService.getDocumentById(req.params.id);
         res.status(400).render("documentEdit", {
@@ -130,6 +135,7 @@ const documentController = {
       );
       res.json(deletedDocument);
     } catch (err) {
+      logError(LOG_MESSAGES.DELETE_DOCUMENT_ERROR, err, { documentId: req.params.id });
       res.status(500).json({ message: err.message });
     }
   },
@@ -149,13 +155,13 @@ const documentController = {
 
       res.json({ summaries });
     } catch (err) {
-      console.error("Get summaries error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.GET_SUMMARIES_BY_EMAIL_ERROR, err, { email });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
@@ -166,7 +172,6 @@ const documentController = {
   async getSummariesByUserId(req, res) {
     try {
       const { userId } = req.query;
-      console.log("getSummariesByUserId - Received userId:", userId);
 
       if (!userId) {
         return res.status(400).json({
@@ -180,13 +185,13 @@ const documentController = {
 
       res.json({ summaries });
     } catch (err) {
-      console.error("Get summaries by userId error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_ID_NOT_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.GET_SUMMARIES_BY_USER_ID_ERROR, err, { userId });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.SUMMARIES_FETCH_FAILED,
@@ -196,7 +201,6 @@ const documentController = {
 
   async upload(req, res) {
     try {
-      console.log("req.body", req.body);
       const { email, name, size, s3_url } = req.body;
 
       if (!email || !name || !size) {
@@ -220,7 +224,6 @@ const documentController = {
         remainingAttempts: result.remainingAttempts,
       });
     } catch (err) {
-      console.error("Upload error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
@@ -234,6 +237,7 @@ const documentController = {
           limitReached: true,
         });
       }
+      logError(LOG_MESSAGES.UPLOAD_DOCUMENT_ERROR, err, { email, name, size });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.DOCUMENT_UPLOAD_FAILED,
@@ -269,7 +273,6 @@ const documentController = {
         summary: mockSummary,
       });
     } catch (err) {
-      console.error("Summarize error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
@@ -288,6 +291,7 @@ const documentController = {
           message: ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED,
         });
       }
+      logError(LOG_MESSAGES.SUMMARIZE_DOCUMENT_ERROR, err, { documentId: req.params.id, email });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.SUMMARY_GENERATION_FAILED,

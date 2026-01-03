@@ -1,9 +1,11 @@
 import {
   DETAIL_MESSAGES,
   ERROR_MESSAGES,
+  LOG_MESSAGES,
   SUCCESS_MESSAGES,
 } from "../constants/messages.js";
 import * as userService from "../services/userService.js";
+import { logError } from "../utils/logger.js";
 
 const userController = {
   async createUser(req, res) {
@@ -60,6 +62,7 @@ const userController = {
           message: ERROR_MESSAGES.USER_WITH_EMAIL_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.CREATE_USER_ERROR, err, { email, first_name, last_name });
       res.status(400).json({
         error: err.message,
         message: ERROR_MESSAGES.USER_CREATE_FAILED,
@@ -93,6 +96,7 @@ const userController = {
           message: ERROR_MESSAGES.USER_NOT_FOUND,
         });
       }
+      logError(LOG_MESSAGES.GET_USER_BY_EMAIL_ERROR, err, { email });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.USER_FETCH_FAILED,
@@ -105,6 +109,7 @@ const userController = {
       const users = await userService.getAllUsers();
       res.json(users);
     } catch (err) {
+      logError(LOG_MESSAGES.GET_ALL_USERS_ERROR, err);
       res.status(500).json({ message: err.message });
     }
   },
@@ -114,6 +119,7 @@ const userController = {
       const user = await userService.getUserById(req.params.id);
       res.json(user);
     } catch (err) {
+      logError(LOG_MESSAGES.GET_USER_BY_ID_ERROR, err, { userId: req.params.id });
       res.status(404).json({ message: err.message });
     }
   },
@@ -123,6 +129,7 @@ const userController = {
       const user = await userService.updateUser(req.params.id, req.body);
       res.json(user);
     } catch (err) {
+      logError(LOG_MESSAGES.UPDATE_USER_ERROR, err, { userId: req.params.id, body: req.body });
       res.status(404).json({ message: err.message });
     }
   },
@@ -132,6 +139,7 @@ const userController = {
       const deletedUser = await userService.deleteUser(req.params.id);
       res.json(deletedUser);
     } catch (err) {
+      logError(LOG_MESSAGES.DELETE_USER_ERROR, err, { userId: req.params.id });
       res.status(500).json({ message: err.message });
     }
   },

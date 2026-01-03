@@ -1,9 +1,11 @@
 import {
   DETAIL_MESSAGES,
   ERROR_MESSAGES,
+  LOG_MESSAGES,
   SUCCESS_MESSAGES,
 } from "../constants/messages.js";
 import * as subscriptionService from "../services/subscriptionService.js";
+import { logError } from "../utils/logger.js";
 
 const subscriptionController = {
   async getByEmail(req, res) {
@@ -24,13 +26,13 @@ const subscriptionController = {
         subscription,
       });
     } catch (err) {
-      console.error("Get subscription error:", err);
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
         return res.status(404).json({
           error: ERROR_MESSAGES.USER_NOT_FOUND,
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.GET_SUBSCRIPTION_ERROR, err, { email });
       return res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.SUBSCRIPTION_FETCH_FAILED,
@@ -56,7 +58,6 @@ const subscriptionController = {
         subscription,
       });
     } catch (err) {
-      console.error("Select plan error:", err);
       if (
         err.message === ERROR_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS ||
         err.message === ERROR_MESSAGES.USER_NOT_FOUND
@@ -72,6 +73,7 @@ const subscriptionController = {
           message: ERROR_MESSAGES.PLAN_NOT_FOUND,
         });
       }
+      logError(LOG_MESSAGES.SELECT_PLAN_ERROR, err, { email, plan });
       return res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.SUBSCRIPTION_SAVE_FAILED,

@@ -1,6 +1,11 @@
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/messages.js";
+import {
+  ERROR_MESSAGES,
+  LOG_MESSAGES,
+  SUCCESS_MESSAGES,
+} from "../constants/messages.js";
 import { documentRepository } from "../repositories/documentRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
+import { logError } from "../utils/logger.js";
 
 const clerkWebhookController = {
   async handleUserCreated(req, res) {
@@ -49,13 +54,16 @@ const clerkWebhookController = {
         },
       });
     } catch (err) {
-      console.error("Error handling Clerk webhook:", err);
       if (err.code === "P2002") {
         return res.status(409).json({
           error: ERROR_MESSAGES.USER_ALREADY_EXISTS_EMAIL,
           message: ERROR_MESSAGES.USER_WITH_EMAIL_EXISTS,
         });
       }
+      logError(LOG_MESSAGES.CLERK_WEBHOOK_USER_CREATED_ERROR, err, {
+        clerkUserId,
+        email,
+      });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.USER_SYNC_FAILED_DB,
@@ -93,9 +101,11 @@ const clerkWebhookController = {
       for (const doc of userDocuments) {
         try {
           await documentRepository.deleteDocument(doc.id);
-          console.log("Deleted document:", doc.id);
         } catch (err) {
-          console.error("Error deleting document:", doc.id, err);
+          logError(LOG_MESSAGES.CLERK_WEBHOOK_DELETE_DOCUMENT_ERROR, err, {
+            documentId: doc.id,
+            userId: existingUser.id,
+          });
         }
       }
 
@@ -107,7 +117,10 @@ const clerkWebhookController = {
         deletedUserId: clerkUserId,
       });
     } catch (err) {
-      console.error("Error handling user deletion webhook:", err);
+      logError(LOG_MESSAGES.CLERK_WEBHOOK_USER_DELETED_ERROR, err, {
+        clerkUserId,
+        email,
+      });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.USER_DELETE_FAILED_DB,
@@ -137,7 +150,7 @@ const clerkWebhookController = {
             .json({ message: SUCCESS_MESSAGES.WEBHOOK_EVENT_UNHANDLED });
       }
     } catch (err) {
-      console.error("Error handling webhook:", err);
+      logError(LOG_MESSAGES.CLERK_WEBHOOK_HANDLE_ERROR, err, { type: req.body?.type });
       res.status(500).json({
         error: err.message,
         message: ERROR_MESSAGES.WEBHOOK_PROCESS_FAILED,
