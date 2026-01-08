@@ -8,6 +8,7 @@ import clerkWebhookRoutes from "./routes/clerkWebhookRoute.js";
 import documentRoutes from "./routes/documentRoute.js";
 import subscriptionRoutes from "./routes/subscriptionRoute.js";
 import userRoutes from "./routes/userRoute.js";
+import { initRedis } from "./services/redisClient.js";
 import { logError, logInfo } from "./utils/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -90,6 +91,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(8080, () => {
-  logInfo("Server started successfully", { port: 8080 });
-});
+// Initialize Redis connection before starting server
+const startServer = async () => {
+  try {
+    await initRedis();
+  } catch (err) {
+    console.warn("Redis initialization failed:", err.message);
+  }
+
+  app.listen(8080, () => {
+    logInfo("Server started successfully", { port: 8080 });
+  });
+};
+
+startServer();

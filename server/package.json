@@ -19,6 +19,7 @@
     "nodemailer": "^6.9.8",
     "prisma": "^6.19.0",
     "pug": "^3.0.3",
+    "redis": "^5.10.0",
     "save-dev": "^0.0.1-security",
     "winston": "^3.11.0"
   }
