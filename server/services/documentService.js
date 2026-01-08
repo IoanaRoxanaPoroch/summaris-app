@@ -1,9 +1,31 @@
+import { ERROR_MESSAGES } from "../constants/messages.js";
 import { documentRepository } from "../repositories/documentRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
-import { ERROR_MESSAGES } from "../constants/messages.js";
+import { deleteCache, getCache, setCache } from "./cacheService.js";
+
+const CACHE_EXPIRATION = 60 * 60 * 24 * 7; // 1 week
 
 export const getAllDocuments = async () => {
-  return documentRepository.getAllDocuments();
+  const cacheKey = "documents:all";
+
+  const cachedDocuments = await getCache(cacheKey);
+  if (cachedDocuments) {
+    return {
+      data: cachedDocuments,
+      source: "cache",
+      cached: true,
+    };
+  }
+
+  const documents = await documentRepository.getAllDocuments();
+
+  await setCache(cacheKey, documents, CACHE_EXPIRATION);
+
+  return {
+    data: documents,
+    source: "database",
+    cached: false,
+  };
 };
 
 export const createDocument = async (data) => {
@@ -24,18 +46,30 @@ export const createDocument = async (data) => {
     throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  return documentRepository.createDocument(data);
+  const createdDocument = await documentRepository.createDocument(data);
+
+  await deleteCache("documents:all");
+
+  return createdDocument;
 };
 
 export const getDocumentById = async (id) => {
+  const cacheKey = `document:${id}`;
+  const cachedDocument = await getCache(cacheKey);
+
   if (!id) {
     throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
+  }
+  if (cachedDocument) {
+    return cachedDocument;
   }
 
   const document = await documentRepository.getDocumentById(id);
   if (!document) {
     throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
+
+  await setCache(cacheKey, document, CACHE_EXPIRATION);
 
   return document;
 };
@@ -76,7 +110,12 @@ export const updateDocument = async (id, data) => {
     throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
-  return documentRepository.updateDocument(id, data);
+  const updatedDocument = await documentRepository.updateDocument(id, data);
+
+  await deleteCache("documents:all");
+  await deleteCache(`document:${id}`);
+
+  return updatedDocument;
 };
 
 export const deleteDocument = async (id) => {
@@ -89,7 +128,12 @@ export const deleteDocument = async (id) => {
     throw new Error(ERROR_MESSAGES.DOCUMENT_NOT_FOUND);
   }
 
-  return documentRepository.deleteDocument(id);
+  const deletedDocument = await documentRepository.deleteDocument(id);
+
+  await deleteCache("documents:all");
+  await deleteCache(`document:${id}`);
+
+  return deletedDocument;
 };
 
 export const uploadDocument = async (email, documentData) => {
@@ -187,4 +231,3 @@ export const formatSummaries = (documents) => {
       created_at: doc.summary.created_at,
     }));
 };
-
