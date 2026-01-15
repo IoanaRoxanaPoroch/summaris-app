@@ -119,6 +119,8 @@ export const HomePage = () => {
     try {
       await post("/subscriptions/api/select", { email, plan: planId });
       setPlanSuccess(SUCCESS.SELECT_PLAN);
+ 
+      window.dispatchEvent(new Event("plan-updated"));
     } catch (err) {
       console.error("Select plan error:", err);
       setError(err.data?.message || err.message || ERRORS.SELECT_PLAN);

@@ -6,6 +6,17 @@ export function Navbar({
   documentCount = 0,
   plan = "Gratuit",
 }) {
+  const getPlanColor = (planName) => {
+    switch (planName) {
+      case "Pro":
+      case "Premium":
+        return COLORS.PLAN_PREMIUM;
+      case "Gratuit":
+      default:
+        return COLORS.PLAN_FREE;
+    }
+  };
+
   return (
     <Paper
       sx={{
@@ -33,7 +44,7 @@ export function Navbar({
         </Typography>
         <Chip
           label={plan}
-          sx={{ backgroundColor: COLORS.PLAN_FREE, color: COLORS.WHITE }}
+          sx={{ backgroundColor: getPlanColor(plan), color: COLORS.WHITE }}
         />
       </Box>
     </Paper>
