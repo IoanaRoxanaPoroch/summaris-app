@@ -32,6 +32,7 @@ export const HomePage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [limitReached, setLimitReached] = useState(false);
+  const [limitReachedMessage, setLimitReachedMessage] = useState(null);
   const [summary, setSummary] = useState(null);
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [planLoading, setPlanLoading] = useState(false);
@@ -67,6 +68,43 @@ export const HomePage = () => {
     fetchActivePlan();
   }, [user, planSuccess]);
 
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  useEffect(() => {
+    if (planSuccess) {
+      const timer = setTimeout(() => {
+        setPlanSuccess(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [planSuccess]);
+
+  useEffect(() => {
+    if (limitReached && limitReachedMessage) {
+      const timer = setTimeout(() => {
+        setLimitReached(false);
+        setLimitReachedMessage(null);
+      }, 10000);
+      return () => clearTimeout(timer);
+    }
+  }, [limitReached, limitReachedMessage]);
+
   const plans = SUBSCRIPTIONS;
 
   const handleSelectPlan = async (planId) => {
@@ -95,7 +133,6 @@ export const HomePage = () => {
       return;
     }
 
-    // Verifică dimensiunea fișierului (max 10MB)
     const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
       setError(ERRORS.FILE_DIMENSION);
@@ -124,17 +161,15 @@ export const HomePage = () => {
         created_at: response.document.created_at,
       });
 
-      setSuccess(SUCCESS.UPLOAD_SUCCESS(response.remainingAttempts));
-
-      if (response.remainingAttempts === 0) {
-        setLimitReached(true);
-      }
+      setSuccess(SUCCESS.UPLOAD_SUCCESS());
     } catch (error) {
       console.error("Upload error:", error);
 
       if (error.data?.limitReached || error.message?.includes("limita")) {
         setLimitReached(true);
-        setError(error.data?.message || error.message || ERRORS.FREE_LIMIT);
+        setLimitReachedMessage(
+          error.data?.message || error.message || ERRORS.FREE_LIMIT
+        );
       } else if (error.data?.error === "Document already exists") {
         setError(error.data?.message || ERRORS.SINGLE_UPLOAD);
       } else {
@@ -150,6 +185,7 @@ export const HomePage = () => {
     setError(null);
     setSuccess(null);
     setLimitReached(false);
+    setLimitReachedMessage(null);
   };
 
   const handleFileSelect = (e) => {
@@ -181,7 +217,6 @@ export const HomePage = () => {
     if (summary?.content) {
       navigator.clipboard.writeText(summary.content);
       setSuccess(SUCCESS.SUMMARY_COPIED);
-      setTimeout(() => setSuccess(null), 3000);
     }
   };
 
@@ -197,7 +232,6 @@ export const HomePage = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       setSuccess(SUCCESS.SUMMARY_DOWNLOADED);
-      setTimeout(() => setSuccess(null), 3000);
     }
   };
 
@@ -219,16 +253,29 @@ export const HomePage = () => {
 
       setSummary(response.summary);
       setSummaryDialogOpen(true);
-      setSuccess(SUCCESS.SUMMARY_GENERATED);
+      setSuccess(SUCCESS.SUMMARY_SUCCESS(response.remainingAttempts));
+      setDocument(null);
+
+      setLimitReached(false);
+      setLimitReachedMessage(null);
     } catch (error) {
       console.error("Summarize error:", error);
-      setError(
-        error.data?.message || error.message || ERRORS.SUMMARY_GENERATION
-      );
+
+      if (error.data?.limitReached || error.message?.includes("limita")) {
+        setLimitReached(true);
+        setLimitReachedMessage(
+          error.data?.message || error.message || ERRORS.FREE_LIMIT
+        );
+      } else {
+        setError(
+          error.data?.message || error.message || ERRORS.SUMMARY_GENERATION
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <Paper
       sx={{
@@ -237,22 +284,30 @@ export const HomePage = () => {
         display: "flex",
         flexDirection: "column",
         boxShadow: `0 2px 8px ${COLORS.SHADOW_DEFAULT}`,
-        overflow: "hidden",
+        overflowY: "auto",
+        overflowX: "hidden",
         minHeight: 0,
       }}
     >
-      <Card
-        sx={{ p: 3, borderRadius: 4, alignContent: "center", display: "flex" }}
-      >
-        <CardContent>
-          <Typography variant="body1" sx={{ mb: 2 }}>
-            {MESSAGES.PLATFORM_DESCRIPTION}
-          </Typography>
-          <Typography variant="body1" fontWeight="medium">
-            {MESSAGES.FREE_LIMIT}
-          </Typography>
-        </CardContent>
-      </Card>
+      {(!activePlanId || activePlanId === "free") && (
+        <Card
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            alignContent: "center",
+            display: "flex",
+          }}
+        >
+          <CardContent>
+            <Typography variant="body1" sx={{ mb: 2 }}>
+              {MESSAGES.PLATFORM_DESCRIPTION}
+            </Typography>
+            <Typography variant="body1" fontWeight="medium">
+              {MESSAGES.FREE_LIMIT}
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
       <Box
         sx={{
@@ -309,9 +364,9 @@ export const HomePage = () => {
         </Alert>
       )}
 
-      {limitReached && (
+      {limitReached && limitReachedMessage && (
         <Alert severity="warning" sx={{ mb: 2 }}>
-          {ERRORS.FREE_LIMIT}
+          {limitReachedMessage}
         </Alert>
       )}
 
@@ -326,17 +381,17 @@ export const HomePage = () => {
           backgroundColor: isDragging
             ? COLORS.PRIMARY_ULTRA_LIGHT
             : COLORS.BACKGROUND_LIGHT,
-          cursor: document || limitReached ? "not-allowed" : "pointer",
-          opacity: document || limitReached ? 0.6 : 1,
+          cursor: limitReached ? "not-allowed" : "pointer",
+          opacity: limitReached ? 0.6 : 1,
           transition: "all 0.3s ease",
           marginBottom: "24px",
-          pointerEvents: document || limitReached ? "none" : "auto",
+          pointerEvents: limitReached ? "none" : "auto",
         }}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => {
-          if (!document && !limitReached) {
+          if (!limitReached) {
             window.document.getElementById("file-input").click();
           }
         }}
@@ -347,6 +402,7 @@ export const HomePage = () => {
           style={{ display: "none" }}
           onChange={handleFileSelect}
           accept=".pdf,.doc,.docx,.txt"
+          disabled={limitReached}
         />
         <CloudUpload
           sx={{
@@ -356,7 +412,7 @@ export const HomePage = () => {
           }}
         />
         <Typography variant="body1" sx={{ marginBottom: "8px" }}>
-          {document || limitReached
+          {limitReached
             ? MESSAGES.UPLOAD_SINGLE_DOCUMENT
             : MESSAGES.UPLOAD_DRAG_OR_CLICK}
         </Typography>
@@ -370,7 +426,7 @@ export const HomePage = () => {
           />
         )}
       </Box>
-      <Box sx={{ flex: 1, overflowY: "auto" }}>
+      <Box sx={{ flex: 1 }}>
         {!document ? (
           <Box
             sx={{

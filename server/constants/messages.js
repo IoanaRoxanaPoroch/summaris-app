@@ -21,7 +21,9 @@ export const ERROR_MESSAGES = {
   INVALID_PLAN_EN: "Invalid plan",
 
   FREE_ATTEMPTS_LIMIT_REACHED:
-    "Ai atins limita de 3 încercări gratuite. Te rugăm să te abonezi pentru a continua.",
+    "Ai atins limita de 3 rezumate gratuite. Te rugăm să te abonezi pentru a continua.",
+  PRO_DAILY_LIMIT_REACHED:
+    "Ai atins limita de 5 rezumate pe zi pentru planul Pro. Te rugăm să încerci mâine sau să alegi la planul Premium.",
 
   WEBHOOK_EMAIL_NOT_FOUND_IN_PAYLOAD:
     "Email-ul utilizatorului nu a fost găsit în payload-ul webhook-ului",
@@ -111,8 +113,10 @@ export const LOG_MESSAGES = {
   SELECT_PLAN_ERROR: "Select plan error",
 
   // Clerk Webhook Controller
-  CLERK_WEBHOOK_USER_CREATED_ERROR: "Error handling Clerk webhook - user created",
-  CLERK_WEBHOOK_USER_DELETED_ERROR: "Error handling Clerk webhook - user deleted",
+  CLERK_WEBHOOK_USER_CREATED_ERROR:
+    "Error handling Clerk webhook - user created",
+  CLERK_WEBHOOK_USER_DELETED_ERROR:
+    "Error handling Clerk webhook - user deleted",
   CLERK_WEBHOOK_DELETE_DOCUMENT_ERROR: "Error deleting document in webhook",
   CLERK_WEBHOOK_HANDLE_ERROR: "Error handling webhook",
 

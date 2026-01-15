@@ -1,5 +1,6 @@
 import { ERROR_MESSAGES } from "../constants/messages.js";
 import { documentRepository } from "../repositories/documentRepository.js";
+import { subscriptionRepository } from "../repositories/subscriptionRepository.js";
 import { userRepository } from "../repositories/userRepository.js";
 import { deleteCache, getCache, setCache } from "./cacheService.js";
 
@@ -97,6 +98,15 @@ export const getDocumentsByUserEmail = async (email) => {
     throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
+  const subscription = await subscriptionRepository.getSubscriptionByUserId(
+    user.id
+  );
+  const planName = subscription?.name?.trim() || "Gratuit";
+
+  if (planName === "Gratuit") {
+    return documentRepository.getDocumentsWithSummaryByUserId(user.id);
+  }
+
   return documentRepository.getDocumentsByUserId(user.id);
 };
 
@@ -150,10 +160,6 @@ export const uploadDocument = async (email, documentData) => {
     throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  if (user.number_of_attempts >= 3) {
-    throw new Error(ERROR_MESSAGES.FREE_ATTEMPTS_LIMIT_REACHED);
-  }
-
   const data = {
     name: documentData.name,
     size: parseInt(documentData.size),
@@ -162,11 +168,9 @@ export const uploadDocument = async (email, documentData) => {
   };
 
   const createdDocument = await documentRepository.createDocument(data);
-  await userRepository.incrementAttempts(user.id);
 
   return {
     document: createdDocument,
-    remainingAttempts: 3 - (user.number_of_attempts + 1),
   };
 };
 
@@ -215,6 +219,93 @@ export const verifyDocumentOwnership = async (documentId, userId) => {
   }
 
   return document;
+};
+
+export const generateSummary = async (documentId, email, summaryContent) => {
+  if (!email) {
+    throw new Error(ERROR_MESSAGES.EMAIL_REQUIRED);
+  }
+
+  if (!documentId) {
+    throw new Error(ERROR_MESSAGES.DOCUMENT_ID_REQUIRED);
+  }
+
+  const user = await userRepository.getUserByEmail(email);
+  if (!user) {
+    throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
+  }
+
+  const document = await verifyDocumentOwnership(documentId, user.id);
+
+  const subscription = await subscriptionRepository.getSubscriptionByUserId(
+    user.id
+  );
+  const planName = subscription?.name?.trim() || "Gratuit";
+
+  if (document.summary) {
+    let remainingAttempts;
+    if (planName === "Gratuit") {
+      const totalSummaries = await documentRepository.countSummariesByUserId(
+        user.id
+      );
+      remainingAttempts = 3 - totalSummaries;
+    } else if (planName === "Pro") {
+      const summariesToday =
+        await documentRepository.countSummariesTodayByUserId(user.id);
+      remainingAttempts = 5 - summariesToday;
+    } else {
+      remainingAttempts = -1;
+    }
+
+    return {
+      summary: document.summary,
+      remainingAttempts,
+    };
+  }
+
+  if (planName === "Gratuit") {
+    const totalSummaries = await documentRepository.countSummariesByUserId(
+      user.id
+    );
+
+    if (totalSummaries >= 3) {
+      throw new Error(ERROR_MESSAGES.FREE_ATTEMPTS_LIMIT_REACHED);
+    }
+  } else if (planName === "Pro") {
+    const summariesToday = await documentRepository.countSummariesTodayByUserId(
+      user.id
+    );
+    if (summariesToday > 5) {
+      throw new Error(ERROR_MESSAGES.PRO_DAILY_LIMIT_REACHED);
+    }
+  }
+
+  const summaryData = {
+    content: summaryContent || "Acesta este un rezumat mock.",
+    size: (summaryContent || "").length || 100,
+    doc_id: documentId,
+  };
+
+  const createdSummary = await documentRepository.createSummary(summaryData);
+
+  let remainingAttempts;
+  if (planName === "Gratuit") {
+    const totalSummariesAfter = await documentRepository.countSummariesByUserId(
+      user.id
+    );
+    remainingAttempts = 3 - totalSummariesAfter;
+  } else if (planName === "Pro") {
+    const summariesTodayAfter =
+      await documentRepository.countSummariesTodayByUserId(user.id);
+    remainingAttempts = 5 - summariesTodayAfter;
+  } else {
+    remainingAttempts = -1;
+  }
+
+  return {
+    summary: createdSummary,
+    remainingAttempts,
+  };
 };
 
 export const formatSummaries = (documents) => {

@@ -2,10 +2,9 @@ import {
   DETAIL_MESSAGES,
   ERROR_MESSAGES,
   LOG_MESSAGES,
-  SUCCESS_MESSAGES
+  SUCCESS_MESSAGES,
 } from "../constants/messages.js";
 import * as documentService from "../services/documentService.js";
-import * as userService from "../services/userService.js";
 import { logError } from "../utils/logger.js";
 
 const documentController = {
@@ -28,7 +27,9 @@ const documentController = {
       const document = await documentService.getDocumentById(req.params.id);
       res.json(document);
     } catch (err) {
-      logError(LOG_MESSAGES.GET_DOCUMENT_BY_ID_ERROR, err, { documentId: req.params.id });
+      logError(LOG_MESSAGES.GET_DOCUMENT_BY_ID_ERROR, err, {
+        documentId: req.params.id,
+      });
       res.status(404).json({ message: err.message });
     }
   },
@@ -112,7 +113,10 @@ const documentController = {
       );
       res.redirect(`/documents/${updatedDocument.id}`);
     } catch (err) {
-      logError(LOG_MESSAGES.UPDATE_DOCUMENT_ERROR, err, { documentId: req.params.id, body: req.body });
+      logError(LOG_MESSAGES.UPDATE_DOCUMENT_ERROR, err, {
+        documentId: req.params.id,
+        body: req.body,
+      });
       try {
         const document = await documentService.getDocumentById(req.params.id);
         res.status(400).render("documentEdit", {
@@ -135,7 +139,9 @@ const documentController = {
       );
       res.json(deletedDocument);
     } catch (err) {
-      logError(LOG_MESSAGES.DELETE_DOCUMENT_ERROR, err, { documentId: req.params.id });
+      logError(LOG_MESSAGES.DELETE_DOCUMENT_ERROR, err, {
+        documentId: req.params.id,
+      });
       res.status(500).json({ message: err.message });
     }
   },
@@ -230,7 +236,10 @@ const documentController = {
           message: DETAIL_MESSAGES.USER_WITH_EMAIL_NOT_EXISTS,
         });
       }
-      if (err.message.includes("limita de 3 încercări")) {
+      if (
+        err.message.includes("limita de 3 încercări") ||
+        err.message.includes("limita de 5 încercări")
+      ) {
         return res.status(403).json({
           error: "Limită atinsă",
           message: err.message,
@@ -246,10 +255,10 @@ const documentController = {
   },
 
   async summarize(req, res) {
-    try {
-      const { id } = req.params;
-      const { email } = req.body;
+    const { id } = req.params;
+    const { email } = req.body || {};
 
+    try {
       if (!email) {
         return res.status(400).json({
           error: ERROR_MESSAGES.EMAIL_REQUIRED,
@@ -257,20 +266,12 @@ const documentController = {
         });
       }
 
-      const user = await userService.getUserByEmail(email);
-      await documentService.verifyDocumentOwnership(id, user.id);
-
-      const mockSummary = {
-        id: `summary-${Date.now()}`,
-        content:
-          "Acesta este un rezumat mock. Logica de generare rezumat va fi implementată ulterior.",
-        size: 100,
-        created_at: new Date(),
-      };
+      const result = await documentService.generateSummary(id, email);
 
       res.json({
         message: SUCCESS_MESSAGES.SUMMARY_GENERATED,
-        summary: mockSummary,
+        summary: result.summary,
+        remainingAttempts: result.remainingAttempts,
       });
     } catch (err) {
       if (err.message === ERROR_MESSAGES.USER_NOT_FOUND) {
@@ -291,10 +292,23 @@ const documentController = {
           message: ERROR_MESSAGES.DOCUMENT_PERMISSION_DENIED,
         });
       }
-      logError(LOG_MESSAGES.SUMMARIZE_DOCUMENT_ERROR, err, { documentId: req.params.id, email });
+      if (
+        err.message.includes("limita de 3 încercări") ||
+        err.message.includes("limita de 5 încercări")
+      ) {
+        return res.status(403).json({
+          error: "Limită atinsă",
+          message: err.message,
+          limitReached: true,
+        });
+      }
+      logError(LOG_MESSAGES.SUMMARIZE_DOCUMENT_ERROR, err, {
+        documentId: id,
+        email: email || "unknown",
+      });
       res.status(500).json({
         error: err.message,
-        message: ERROR_MESSAGES.SUMMARY_GENERATION_FAILED,
+        message: err.message || ERROR_MESSAGES.SUMMARY_GENERATION_FAILED,
       });
     }
   },
