@@ -5,7 +5,7 @@ export const ERRORS = {
   FILE_DIMENSION:
     "Fișierul este prea mare. Dimensiunea maximă permisă este 10MB.",
   FREE_LIMIT:
-    "Ai atins limita de 3 încercări gratuite. Te rugăm să te abonezi pentru a continua.",
+    "Ai atins limita de 3 rezumate gratuite. Te rugăm să te abonezi pentru a continua.",
   DOCUMENT_EXISTS: "Acest document a fost deja incarcat",
   SINGLE_UPLOAD:
     "Poți încărca doar un singur document. Șterge documentul existent pentru a încărca unul nou.",
@@ -19,6 +19,13 @@ export const SUCCESS = {
   SUMMARY_COPIED: "Rezumat copiat în clipboard!",
   SUMMARY_DOWNLOADED: "Rezumat descărcat cu succes!",
   SUMMARY_GENERATED: "Rezumat generat cu succes!",
-  UPLOAD_SUCCESS: (remainingAttempts) =>
-    `Document încărcat cu succes! Mai ai ${remainingAttempts} încercări rămase.`,
+  UPLOAD_SUCCESS: () => {
+    return "Document încărcat cu succes!";
+  },
+  SUMMARY_SUCCESS: (remainingAttempts) => {
+    if (remainingAttempts === -1) {
+      return "Rezumat generat cu succes! Ai rezumate nelimitate.";
+    }
+    return `Rezumat generat cu succes! Mai ai ${remainingAttempts} rezumate rămase.`;
+  },
 };

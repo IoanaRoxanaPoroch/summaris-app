@@ -1,18 +1,19 @@
 import { useUser } from "@clerk/clerk-react";
 import {
-    Alert,
-    Box,
-    Card,
-    CardContent,
-    CircularProgress,
-    List,
-    ListItem,
-    ListItemText,
-    Paper,
-    Typography,
+  Alert,
+  Box,
+  Card,
+  CardContent,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Paper,
+  Typography,
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { get } from "../services/apiClient";
+import COLORS from "../theme/colors";
 
 export const SummariesPage = () => {
   const { user } = useUser();
@@ -38,6 +39,15 @@ export const SummariesPage = () => {
 
     fetchSummaries();
   }, [user]);
+
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const formatDate = (date) => {
     if (!date) return "—";

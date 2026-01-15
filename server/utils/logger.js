@@ -67,10 +67,11 @@ class EmailTransport extends Transport {
     this.from = options.from;
     this.to = options.to;
     this.level = options.level || "error";
+    this.isVerified = options.isVerified || false;
   }
 
   log(info, callback) {
-    if (!this.transporter) {
+    if (!this.transporter || !this.isVerified) {
       return callback();
     }
 
@@ -87,7 +88,9 @@ class EmailTransport extends Transport {
       };
 
       this.transporter.sendMail(mailOptions).catch((err) => {
-        console.error("Failed to send log email:", err);
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to send log email:", err.message);
+        }
       });
     }
 
@@ -96,7 +99,7 @@ class EmailTransport extends Transport {
 }
 
 // Configurare transport email cu nodemailer
-const createEmailTransport = () => {
+const createEmailTransport = async () => {
   if (
     !process.env.SMTP_HOST ||
     !process.env.SMTP_USER ||
@@ -115,12 +118,32 @@ const createEmailTransport = () => {
     },
   });
 
-  return new EmailTransport({
-    transporter,
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to: process.env.LOG_EMAIL_RECIPIENTS || process.env.SMTP_USER,
-    level: "error",
-  });
+  try {
+    await transporter.verify();
+    return new EmailTransport({
+      transporter,
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: process.env.LOG_EMAIL_RECIPIENTS || process.env.SMTP_USER,
+      level: "error",
+      isVerified: true,
+    });
+  } catch (error) {
+    console.error("Email transport configuration failed:", error.message);
+    if (
+      error.message.includes("BadCredentials") ||
+      error.message.includes("Invalid login")
+    ) {
+      console.error(
+        "SMTP authentication failed. For Gmail, you need to use an App Password instead of your regular password."
+      );
+      console.error("See: https://support.google.com/accounts/answer/185833");
+      console.error(
+        "Email alerts will be disabled until SMTP is properly configured."
+      );
+    }
+    // Returnează null pentru a dezactiva transportul dacă autentificarea eșuează
+    return null;
+  }
 };
 
 // Creează logger-ul principal
@@ -167,11 +190,16 @@ if (process.env.SLACK_WEBHOOK_URL) {
   );
 }
 
-// Adaugă transportul Email dacă este configurat
-const emailTransport = createEmailTransport();
-if (emailTransport) {
-  logger.add(emailTransport);
-}
+(async () => {
+  try {
+    const emailTransport = await createEmailTransport();
+    if (emailTransport) {
+      logger.add(emailTransport);
+    }
+  } catch (error) {
+    console.error("Failed to initialize email transport:", error.message);
+  }
+})();
 
 // Helper functions pentru logging
 export const logError = (message, error, meta = {}) => {

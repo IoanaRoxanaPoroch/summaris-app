@@ -1,6 +1,7 @@
 import { useUser } from "@clerk/clerk-react";
 import { Box } from "@mui/material";
 import { useCallback, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { get } from "../../services/apiClient";
 import COLORS from "../../theme/colors";
@@ -9,7 +10,17 @@ import { Sidebar } from "../common/Sidebar";
 
 function Layout({ children }) {
   const { user } = useUser();
+  const location = useLocation();
   const [plan, setPlan] = useState("Gratuit");
+
+  const getPageTitle = (pathname) => {
+    const routeMap = {
+      "/home": "Acasă",
+      "/my-docs": "Documente",
+      "/summaries": "Rezumate",
+    };
+    return routeMap[pathname] || "Pagina curentă";
+  };
 
   const fetchPlan = useCallback(async () => {
     const email = user?.emailAddresses?.[0]?.emailAddress;
@@ -57,7 +68,7 @@ function Layout({ children }) {
           overflow: "hidden",
         }}
       >
-        <Navbar plan={plan} />
+        <Navbar title={getPageTitle(location.pathname)} plan={plan} />
 
         <Box sx={{ flex: 1, overflow: "auto" }}>{children}</Box>
       </Box>
